@@ -5,7 +5,7 @@ import com.soywiz.korte.Tag
 import com.soywiz.korte.block.BlockExtends
 
 val TagExtends = Tag("extends", setOf(), "end") {
-	val part = parts.first()
-	val parent = ExprNode.parseExpr(ExprNode.Token.tokenize(part.token.content))
+	val part = chunks.first()
+	val parent = ExprNode.parseExpr(ExprNode.Token.tokenize(part.tag.content))
 	BlockExtends(parent)
 }

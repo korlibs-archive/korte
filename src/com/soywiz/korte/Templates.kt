@@ -3,14 +3,14 @@ package com.soywiz.korte
 import com.soywiz.korio.util.AsyncCache
 import com.soywiz.korio.vfs.VfsFile
 
-class TemplateFactory(
+class Templates(
 	val root: VfsFile,
-	val config: Template.Config = Template.Config()
+	val config: TemplateConfig = TemplateConfig()
 ) {
 	val cache = AsyncCache()
 
 	suspend operator fun get(name: String): Template = cache(name) {
 		val content = root[name].readString()
-		Template(this@TemplateFactory, content, config).init()
+		Template(this@Templates, content, config).init()
 	}
 }

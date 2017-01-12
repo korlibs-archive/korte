@@ -3,19 +3,16 @@ package com.soywiz.korte
 import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.vfs.MemoryVfs
-import com.soywiz.korte.Block
 import com.soywiz.korte.Token
 import com.soywiz.korte.block.BlockText
-import com.soywiz.korte.filter.*
-import com.soywiz.korte.tag.*
 import com.soywiz.korte.util.Dynamic
 import java.util.*
 import kotlin.collections.set
 
 class Template internal constructor(
-	val factory: TemplateFactory,
+	val templates: Templates,
 	val template: String,
-	val config: Template.Config = Config()
+	val config: TemplateConfig = TemplateConfig()
 ) {
 	val blocks = hashMapOf<String, Block>()
 	val parseContext = ParseContext(this, config)
@@ -27,36 +24,10 @@ class Template internal constructor(
 		this
 	}
 
-	class ParseContext(val template: Template, val config: Config)
-
-	class Config(
-		extraTags: List<Tag> = listOf(),
-		extraFilters: List<Filter> = listOf()
-	) {
-		val integratedFilters = listOf(
-			FilterLength, FilterCapitalize, FilterUpper,
-			FilterLower, FilterTrim, FilterQuote, FilterJoin,
-			FilterSlice, FilterReverse
-		)
-
-		val integratedTags = listOf(
-			TagEmpty, TagIf, TagFor, SetTag, TagDebug, TagBlock, TagExtends
-		)
-
-		private val allTags = integratedTags + extraTags
-		private val allFilters = integratedFilters + extraFilters
-
-		val tags = hashMapOf<String, Tag>().apply {
-			for (tag in allTags) {
-				this[tag.name] = tag
-				for (alias in tag.aliases) this[alias] = tag
-			}
-		}
-
-		val filters = hashMapOf<String, Filter>().apply {
-			for (filter in allFilters) this[filter.name] = filter
-		}
+	class ParseContext(val template: Template, val config: TemplateConfig) {
+		val templates: Templates get() = template.templates
 	}
+
 
 	class Scope(val map: Any?, val parent: Template.Scope? = null) {
 		operator fun get(key: Any?): Any? = Dynamic.accessAny(map, key) ?: parent?.get(key)
@@ -95,10 +66,12 @@ class Template internal constructor(
 		val rootTemplate: Template,
 		var currentTemplate: Template,
 		var scope: Template.Scope,
-		val config: Template.Config,
+		val config: TemplateConfig,
 		val write: (str: String) -> Unit,
 		var templateStack: LinkedList<Template> = LinkedList()
 	) {
+		val templates = rootTemplate.templates
+
 		inline fun createScope(callback: () -> Unit) = this.apply {
 			val old = this.scope
 			try {
@@ -123,6 +96,6 @@ class Template internal constructor(
 	}
 }
 
-suspend fun Template(template: String, config: Template.Config = Template.Config()): Template = asyncFun {
-	TemplateFactory(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config).get("template")
+suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template = asyncFun {
+	Templates(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config).get("template")
 }

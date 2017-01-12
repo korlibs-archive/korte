@@ -3,7 +3,9 @@ package com.soywiz.korte
 interface Token {
 	data class TLiteral(val content: String) : Token
 	data class TExpr(val content: String) : Token
-	data class TTag(val name: String, val content: String) : Token
+	data class TTag(val name: String, val content: String) : Token {
+		val tokens by lazy { ExprNode.Token.tokenize(content) }
+	}
 
 	companion object {
 		fun tokenize(str: String): List<Token> {

@@ -132,12 +132,12 @@ class TemplateTest {
 		}
 
 		val CustomTag = Tag("custom", setOf(), null) {
-			CustomNode(parts.first().token.content)
+			CustomNode(chunks.first().tag.content)
 		}
 
 		Assert.assertEquals(
 			"CUSTOM(test)CUSTOM(demo)",
-			Template("{% custom test %}{% custom demo %}", Template.Config(extraTags = listOf(CustomTag))).invoke(null)
+			Template("{% custom test %}{% custom demo %}", TemplateConfig(extraTags = listOf(CustomTag))).invoke(null)
 		)
 	}
 

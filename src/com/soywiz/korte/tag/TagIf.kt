@@ -9,10 +9,10 @@ val TagIf = Tag("if", setOf("else", "elseif"), "end") {
 	val ifBranches = arrayListOf<Pair<ExprNode, Block>>()
 	var elseBranch: Block? = null
 
-	for (part in parts) {
-		when (part.token.name) {
+	for (part in chunks) {
+		when (part.tag.name) {
 			"if", "elseif" -> {
-				ifBranches += ExprNode.parse(part.token.content) to part.body
+				ifBranches += ExprNode.parse(part.tag.content) to part.body
 			}
 			"else" -> {
 				elseBranch = part.body

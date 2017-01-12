@@ -6,9 +6,9 @@ import com.soywiz.korte.block.BlockFor
 import com.soywiz.korte.tryRead
 
 val TagFor = Tag("for", setOf("else"), "end") {
-	val main = parts[0]
-	val elseTag = parts.getOrNull(1)?.body
-	val tr = ExprNode.Token.tokenize(main.token.content)
+	val main = chunks[0]
+	val elseTag = chunks.getOrNull(1)?.body
+	val tr = ExprNode.Token.tokenize(main.tag.content)
 	val varnames = arrayListOf<String>()
 	do {
 		varnames += ExprNode.parseId(tr)

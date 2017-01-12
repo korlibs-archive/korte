@@ -5,8 +5,8 @@ import com.soywiz.korte.Tag
 import com.soywiz.korte.block.BlockBlock
 
 val TagBlock = Tag("block", setOf(), "end") {
-	val part = parts.first()
-	val tokens = ExprNode.Token.tokenize(part.token.content)
+	val part = chunks.first()
+	val tokens = ExprNode.Token.tokenize(part.tag.content)
 	val name = ExprNode.parseId(tokens)
 	if (name.isEmpty()) throw IllegalArgumentException("block without name")
 	context.template.addBlock(name, part.body)

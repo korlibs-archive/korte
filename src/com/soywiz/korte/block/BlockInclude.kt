@@ -6,12 +6,9 @@ import com.soywiz.korte.ExprNode
 import com.soywiz.korte.Template
 import com.soywiz.korte.util.toDynamicString
 
-data class BlockExtends(val expr: ExprNode) : Block {
+data class BlockInclude(val fileNameExpr: ExprNode) : Block {
 	override suspend fun eval(context: Template.EvalContext) = asyncFun<Unit> {
-		val result = expr.eval(context)
-		val parentTemplate = context.rootTemplate.templates.get(result.toDynamicString())
-		parentTemplate.eval(context)
-		throw InterruptedException()
-		//context.template.parent
+		val fileName = fileNameExpr.eval(context).toDynamicString()
+		context.templates.get(fileName).eval(context)
 	}
 }

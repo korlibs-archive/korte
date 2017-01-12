@@ -5,5 +5,5 @@ import com.soywiz.korte.Tag
 import com.soywiz.korte.block.BlockDebug
 
 val TagDebug = Tag("debug", setOf(), null) {
-	BlockDebug(ExprNode.parse(parts[0].token.content))
+	BlockDebug(ExprNode.parse(chunks[0].tag.content))
 }
