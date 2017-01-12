@@ -7,6 +7,7 @@ import com.soywiz.korio.util.quote
 import com.soywiz.korio.vfs.MemoryVfs
 import com.soywiz.korte.BlockNode
 import com.soywiz.korte.Token
+import com.soywiz.korte.tag.IfTag
 import kotlin.collections.set
 
 class Template(
@@ -32,7 +33,7 @@ class Template(
 			Filter("file_exists") { subject, _ -> java.io.File(Dynamic.toString(subject)).exists() }
 		)
 
-		private val allTags = listOf(Tag.EMPTY, Tag.IF, Tag.FOR, Tag.SET, Tag.DEBUG) + extraTags
+		private val allTags = listOf(Tag.EMPTY, IfTag, Tag.FOR, Tag.SET, Tag.DEBUG) + extraTags
 		private val allFilters = integratedFilters + extraFilters
 
 		val tags = hashMapOf<String, Tag>().apply {
@@ -50,13 +51,8 @@ class Template(
 	data class Filter(val name: String, val eval: (subject: Any?, args: List<Any?>) -> Any?)
 
 	class Scope(val map: Any?, val parent: Template.Scope? = null) {
-		operator fun get(key: Any?): Any? {
-			return Dynamic.accessAny(map, key) ?: parent?.get(key)
-		}
-
-		operator fun set(key: Any?, value: Any?) {
-			Dynamic.setAny(map, key, value)
-		}
+		operator fun get(key: Any?): Any? = Dynamic.accessAny(map, key) ?: parent?.get(key)
+		operator fun set(key: Any?, value: Any?): Unit = run { Dynamic.setAny(map, key, value) }
 	}
 
 	operator fun invoke(args: Any?): String {
@@ -64,6 +60,10 @@ class Template(
 		val context = Template.Context(Scope(args), config, write = { str.append(it) })
 		context.createScope { node.eval(context) }
 		return str.toString()
+	}
+
+	operator fun invoke(vararg args: Pair<String, Any?>): String {
+		return invoke(hashMapOf(*args))
 	}
 
 	class Context(var scope: Template.Scope, val config: Template.Config, val write: (str: String) -> Unit) {

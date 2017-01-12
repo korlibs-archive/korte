@@ -7,11 +7,7 @@ data class Tag(val name: String, val nextList: Set<String>, val end: String?, va
 		val EMPTY = Tag("", setOf(""), "") { parts ->
 			BlockNode.group(parts.map { it.body })
 		}
-		val IF = Tag("if", setOf("else"), "end") { parts ->
-			val main = parts[0]
-			val elseBlock = parts.getOrNull(1)
-			BlockNode.IF(ExprNode.parse(main.token.content), main.body, elseBlock?.body)
-		}
+
 		val FOR = Tag("for", setOf(), "end") { parts ->
 			val main = parts[0]
 			val tr = ExprNode.Token.tokenize(main.token.content)

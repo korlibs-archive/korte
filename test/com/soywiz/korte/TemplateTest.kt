@@ -1,11 +1,11 @@
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+
 package com.soywiz.korte
 
 import com.soywiz.korio.async.EventLoop
 import com.soywiz.korio.async.EventLoopTest
 import com.soywiz.korio.async.sync
 import com.soywiz.korio.util.captureStdout
-import com.soywiz.korte.BlockNode
-import com.soywiz.korte.Tag
 import org.junit.Assert
 import org.junit.Test
 
@@ -17,29 +17,40 @@ class TemplateTest {
 	}
 
 	@Test fun testSimple() = sync {
-		Assert.assertEquals("hello soywiz", Template("hello {{ name }}")(mapOf("name" to "soywiz")))
-		Assert.assertEquals("soywizsoywiz", Template("{{name}}{{ name }}")(mapOf("name" to "soywiz")))
+		Assert.assertEquals("hello soywiz", Template("hello {{ name }}")("name" to "soywiz"))
+		Assert.assertEquals("soywizsoywiz", Template("{{name}}{{ name }}")("name" to "soywiz"))
 	}
 
 	@Test fun testFor() = sync {
-		Assert.assertEquals("123", Template("{% for n in numbers %}{{ n }}{% end %}")(mapOf("numbers" to listOf(1, 2, 3))))
+		Assert.assertEquals("123", Template("{% for n in numbers %}{{ n }}{% end %}")("numbers" to listOf(1, 2, 3)))
 	}
 
 	@Test fun testDebug() = sync {
 		var result: String? = null
 		val tpl = Template("a {% debug 'hello ' + name %} b")
 		val stdout = captureStdout {
-			result = tpl(mapOf("name" to "world"))
+			result = tpl("name" to "world")
 		}
 		Assert.assertEquals("hello world", stdout.trim())
 		Assert.assertEquals("a  b", result)
 	}
 
 	@Test fun testSimpleIf() = sync {
-		Assert.assertEquals("true", Template("{% if cond %}true{% else %}false{% end %}")(mapOf("cond" to 1)))
-		Assert.assertEquals("false", Template("{% if cond %}true{% else %}false{% end %}")(mapOf("cond" to 0)))
-		Assert.assertEquals("true", Template("{% if cond %}true{% end %}")(mapOf("cond" to 1)))
-		Assert.assertEquals("", Template("{% if cond %}true{% end %}")(mapOf("cond" to 0)))
+		Assert.assertEquals("true", Template("{% if cond %}true{% else %}false{% end %}")("cond" to 1))
+		Assert.assertEquals("false", Template("{% if cond %}true{% else %}false{% end %}")("cond" to 0))
+		Assert.assertEquals("true", Template("{% if cond %}true{% end %}")("cond" to 1))
+		Assert.assertEquals("", Template("{% if cond %}true{% end %}")("cond" to 0))
+	}
+
+	@Test fun testSimpleElseIf() = sync {
+		val tpl = Template("{% if v == 1 %}one{% elseif v == 2 %}two{% elseif v < 5 %}less than five{% elseif v > 8 %}greater than eight{% else %}other{% end %}")
+		Assert.assertEquals("one", tpl("v" to 1))
+		Assert.assertEquals("two", tpl("v" to 2))
+		Assert.assertEquals("less than five", tpl("v" to 3))
+		Assert.assertEquals("less than five", tpl("v" to 4))
+		Assert.assertEquals("other", tpl("v" to 5))
+		Assert.assertEquals("other", tpl("v" to 6))
+		Assert.assertEquals("greater than eight", tpl("v" to 9))
 	}
 
 	@Test fun testEval() = sync {
@@ -51,21 +62,21 @@ class TemplateTest {
 
 	@Test fun testExists() = sync {
 		Assert.assertEquals("false", Template("{% if prop %}true{% else %}false{% end %}")(null))
-		Assert.assertEquals("true", Template("{% if prop %}true{% else %}false{% end %}")(mapOf("prop" to "any")))
-		Assert.assertEquals("false", Template("{% if prop %}true{% else %}false{% end %}")(mapOf("prop" to "")))
+		Assert.assertEquals("true", Template("{% if prop %}true{% else %}false{% end %}")("prop" to "any"))
+		Assert.assertEquals("false", Template("{% if prop %}true{% else %}false{% end %}")("prop" to ""))
 	}
 
 	@Test fun testForAccess() = sync {
-		Assert.assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n.surname }}{% end %}")(mapOf("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros")))))
-		Assert.assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n['sur'+'name'] }}{% end %}")(mapOf("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros")))))
-		Assert.assertEquals("ZardBallesteros", Template("{% for nin in persons %}{{ nin['sur'+'name'] }}{% end %}")(mapOf("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros")))))
+		Assert.assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n.surname }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros"))))
+		Assert.assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n['sur'+'name'] }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros"))))
+		Assert.assertEquals("ZardBallesteros", Template("{% for nin in persons %}{{ nin['sur'+'name'] }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros"))))
 	}
 
 	@Test fun testFilters() = sync {
-		Assert.assertEquals("CARLOS", Template("{{ name|upper }}")(mapOf("name" to "caRLos")))
-		Assert.assertEquals("carlos", Template("{{ name|lower }}")(mapOf("name" to "caRLos")))
-		Assert.assertEquals("Carlos", Template("{{ name|capitalize }}")(mapOf("name" to "caRLos")))
-		Assert.assertEquals("Carlos", Template("{{ (name)|capitalize }}")(mapOf("name" to "caRLos")))
+		Assert.assertEquals("CARLOS", Template("{{ name|upper }}")("name" to "caRLos"))
+		Assert.assertEquals("carlos", Template("{{ name|lower }}")("name" to "caRLos"))
+		Assert.assertEquals("Carlos", Template("{{ name|capitalize }}")("name" to "caRLos"))
+		Assert.assertEquals("Carlos", Template("{{ (name)|capitalize }}")("name" to "caRLos"))
 		Assert.assertEquals("Carlos", Template("{{ 'caRLos'|capitalize }}")(null))
 	}
 
@@ -83,10 +94,10 @@ class TemplateTest {
 		val success = "success!"
 
 		class Test1 {
-			val a: String get() = "$success"
+			val a: String get() = success
 		}
 
-		Assert.assertEquals("$success", Template("{{ test.a }}")(mapOf("test" to Test1())))
+		Assert.assertEquals(success, Template("{{ test.a }}")("test" to Test1()))
 	}
 
 	@Test fun testCustomTag() = sync {
