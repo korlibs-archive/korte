@@ -8,29 +8,33 @@ import com.soywiz.korio.util.unescape
 import com.soywiz.korte.util.Dynamic
 
 interface ExprNode {
-	fun eval(context: Template.Context): Any?
+	fun eval(context: Template.EvalContext): Any?
 
 	data class VAR(val name: String) : ExprNode {
-		override fun eval(context: Template.Context): Any? = context.scope[name]
+		override fun eval(context: Template.EvalContext): Any? = context.scope[name]
 	}
 
 	data class LIT(val value: Any?) : ExprNode {
-		override fun eval(context: Template.Context): Any? = value
+		override fun eval(context: Template.EvalContext): Any? = value
 	}
 
 	data class ARRAY_LIT(val items: List<ExprNode>) : ExprNode {
-		override fun eval(context: Template.Context): Any? = items.map { it.eval(context) }
+		override fun eval(context: Template.EvalContext): Any? = items.map { it.eval(context) }
+	}
+
+	data class OBJECT_LIT(val items: List<Pair<ExprNode, ExprNode>>) : ExprNode {
+		override fun eval(context: Template.EvalContext): Any? = items.map {  it.first.eval(context) to it.second.eval(context) }.toMap()
 	}
 
 	data class FILTER(val name: String, val expr: ExprNode, val params: List<ExprNode>) : ExprNode {
-		override fun eval(context: Template.Context): Any? {
+		override fun eval(context: Template.EvalContext): Any? {
 			val filter = context.config.filters[name] ?: invalidOp("Unknown filter '$name'")
 			return filter.eval(expr.eval(context), params.map { it.eval(context) })
 		}
 	}
 
 	data class ACCESS(val expr: ExprNode, val name: ExprNode) : ExprNode {
-		override fun eval(context: Template.Context): Any? {
+		override fun eval(context: Template.EvalContext): Any? {
 			val obj = expr.eval(context)
 			val key = name.eval(context)
 			try {
@@ -46,7 +50,7 @@ interface ExprNode {
 	}
 
 	data class CALL(val method: ExprNode, val args: List<ExprNode>) : ExprNode {
-		override fun eval(context: Template.Context): Any? {
+		override fun eval(context: Template.EvalContext): Any? {
 			if (method !is ExprNode.ACCESS) {
 				return Dynamic.callAny(method.eval(context), args.map { it.eval(context) })
 			} else {
@@ -56,11 +60,11 @@ interface ExprNode {
 	}
 
 	data class BINOP(val l: ExprNode, val r: ExprNode, val op: String) : ExprNode {
-		override fun eval(context: Template.Context): Any? = Dynamic.binop(l.eval(context), r.eval(context), op)
+		override fun eval(context: Template.EvalContext): Any? = Dynamic.binop(l.eval(context), r.eval(context), op)
 	}
 
 	data class UNOP(val r: ExprNode, val op: String) : ExprNode {
-		override fun eval(context: Template.Context): Any? = Dynamic.unop(r.eval(context), op)
+		override fun eval(context: Template.EvalContext): Any? = Dynamic.unop(r.eval(context), op)
 	}
 
 	companion object {
@@ -105,7 +109,6 @@ interface ExprNode {
 		}
 
 		private fun parseFinal(r: ListReader<Token>): ExprNode {
-
 			var construct: ExprNode = when (r.peek().text) {
 				"!", "~", "-", "+" -> {
 					val op = r.read().text
@@ -119,8 +122,8 @@ interface ExprNode {
 				}
 			// Array literal
 				"[" -> {
-					val items = arrayListOf<ExprNode>()
 					r.read()
+					val items = arrayListOf<ExprNode>()
 					loop@ while (r.hasMore && r.peek().text != "]") {
 						items += ExprNode.Companion.parseExpr(r)
 						when (r.peek().text) {
@@ -131,6 +134,24 @@ interface ExprNode {
 					}
 					r.expect("]")
 					ARRAY_LIT(items)
+				}
+			// Object literal
+				"{" -> {
+					r.read()
+					val items = arrayListOf<Pair<ExprNode, ExprNode>>()
+					loop@ while (r.hasMore && r.peek().text != "}") {
+						val k = ExprNode.Companion.parseFinal(r)
+						r.expect(":")
+						val v = ExprNode.Companion.parseExpr(r)
+						items += k to v
+						when (r.peek().text) {
+							"," -> r.read()
+							"}" -> continue@loop
+							else -> invalidOp("Expected , or }")
+						}
+					}
+					r.expect("}")
+					OBJECT_LIT(items)
 				}
 				else -> {
 					if (r.peek() is ExprNode.Token.TNumber) {

@@ -2,7 +2,7 @@ package com.soywiz.korte.util
 
 import com.soywiz.korio.error.invalidOp
 import com.soywiz.korio.error.noImpl
-import com.soywiz.korio.util.toBetterString
+import com.soywiz.korio.util.quote
 import java.lang.reflect.Array
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -64,6 +64,8 @@ object Dynamic {
 			else -> toInt(it) != 0
 		}
 	}
+
+	fun toList(it: Any?): List<*> = toIterable(it).toList()
 
 	fun toIterable(it: Any?): Iterable<*> {
 		return when (it) {
@@ -248,6 +250,12 @@ object Dynamic {
 					return value.toInt().toString()
 				}
 			}
+			is Iterable<*> -> {
+				return "[" + value.map { toString(it) }.joinToString(", ") + "]"
+			}
+			is Map<*, *> -> {
+				return "{" + value.map { toString(it.key).quote() + ": " + toString(it.value) }.joinToString(", ") + "}"
+			}
 		}
 		return value.toString()
 	}
@@ -256,7 +264,7 @@ object Dynamic {
 		return when (op) {
 			"+" -> {
 				when (l) {
-					is String -> l.toString() + r.toBetterString()
+					is String -> l.toString() + Dynamic.toString(r)
 					is Iterable<*> -> toIterable(l) + toIterable(r)
 					else -> toNumber(l) + toNumber(r)
 				}
@@ -310,6 +318,10 @@ object Dynamic {
 		if (subject == null) return 0
 		if (subject.javaClass.isArray) return Array.getLength(subject)
 		if (subject is List<*>) return subject.size
+		if (subject is Map<*, *>) return subject.size
+		if (subject is Iterable<*>) return subject.count()
 		return subject.toString().length
 	}
 }
+
+fun Any?.toDynamicString() = Dynamic.toString(this)

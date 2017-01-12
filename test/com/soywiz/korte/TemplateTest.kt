@@ -4,8 +4,9 @@ package com.soywiz.korte
 
 import com.soywiz.korio.async.EventLoop
 import com.soywiz.korio.async.EventLoopTest
+import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.async.sync
-import com.soywiz.korio.util.captureStdout
+import com.soywiz.korio.util.asyncCaptureStdout
 import org.junit.Assert
 import org.junit.Test
 
@@ -53,7 +54,7 @@ class TemplateTest {
 	@Test fun testDebug() = sync {
 		var result: String? = null
 		val tpl = Template("a {% debug 'hello ' + name %} b")
-		val stdout = captureStdout {
+		val stdout = asyncCaptureStdout {
 			result = tpl("name" to "world")
 		}
 		Assert.assertEquals("hello world", stdout.trim())
@@ -126,12 +127,12 @@ class TemplateTest {
 	}
 
 	@Test fun testCustomTag() = sync {
-		class CustomNode(val text: String) : BlockNode {
-			override fun eval(context: Template.Context) = run { context.write("CUSTOM($text)") }
+		class CustomNode(val text: String) : Block {
+			override suspend fun eval(context: Template.EvalContext) = asyncFun { context.write("CUSTOM($text)") }
 		}
 
-		val CustomTag = Tag("custom", setOf(), null) {
-			CustomNode(it.first().token.content)
+		val CustomTag = Tag("custom", setOf(), null) { ctx, args ->
+			CustomNode(args.first().token.content)
 		}
 
 		Assert.assertEquals(
@@ -139,6 +140,30 @@ class TemplateTest {
 			Template("{% custom test %}{% custom demo %}", Template.Config(extraTags = listOf(CustomTag))).invoke(null)
 		)
 	}
+
+	@Test fun testSlice() = sync {
+		val map = hashMapOf("v" to listOf(1, 2, 3, 4))
+		Assert.assertEquals("[1, 2, 3, 4]", Template("{{ v }}")(map))
+		Assert.assertEquals("[2, 3, 4]", Template("{{ v|slice(1) }}")(map))
+		Assert.assertEquals("[2, 3]", Template("{{ v|slice(1, 2) }}")(map))
+		Assert.assertEquals("ello", Template("{{ v|slice(1) }}")(mapOf("v" to "hello")))
+		Assert.assertEquals("el", Template("{{ v|slice(1, 2) }}")(mapOf("v" to "hello")))
+	}
+
+	@Test fun testReverse() = sync {
+		val map = hashMapOf("v" to listOf(1, 2, 3, 4))
+		Assert.assertEquals("[4, 3, 2, 1]", Template("{{ v|reverse }}")(map))
+		Assert.assertEquals("olleh", Template("{{ v|reverse }}")(mapOf("v" to "hello")))
+		Assert.assertEquals("le", Template("{{ v|slice(1, 2)|reverse }}")(mapOf("v" to "hello")))
+	}
+
+	@Test fun testObject() = sync {
+		Assert.assertEquals("""{"foo": 1, "bar": 2}""", Template("{{ { 'foo': 1, 'bar': 2 } }}")())
+	}
+
+	//@Test fun testStringInterpolation() = sync {
+	//	Assert.assertEquals("a2b", Template("{{ \"a#{7 - 5}b\" }}")())
+	//}
 
 	data class Person(val name: String, val surname: String)
 }

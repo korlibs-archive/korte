@@ -1,8 +1,8 @@
 package com.soywiz.korte.tag
 
-import com.soywiz.korte.BlockNode
+import com.soywiz.korte.Block
 import com.soywiz.korte.Tag
 
-val TagEmpty = Tag("", setOf(""), "") { parts ->
-	BlockNode.group(parts.map { it.body })
+val TagEmpty = Tag("", setOf(""), "") { context, parts ->
+	Block.group(parts.map { it.body })
 }

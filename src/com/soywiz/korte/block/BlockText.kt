@@ -1,8 +1,9 @@
 package com.soywiz.korte.block
 
-import com.soywiz.korte.BlockNode
+import com.soywiz.korio.async.asyncFun
+import com.soywiz.korte.Block
 import com.soywiz.korte.Template
 
-data class BlockText(val content: String) : BlockNode {
-	override fun eval(context: Template.Context) = run { context.write(content) }
+data class BlockText(val content: String) : Block {
+	override suspend fun eval(context: Template.EvalContext) = asyncFun<Unit> { context.write(content) }
 }

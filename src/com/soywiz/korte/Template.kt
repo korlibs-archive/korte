@@ -2,38 +2,43 @@ package com.soywiz.korte
 
 import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.stream.openAsync
-import com.soywiz.korio.util.quote
 import com.soywiz.korio.vfs.MemoryVfs
-import com.soywiz.korte.BlockNode
+import com.soywiz.korte.Block
 import com.soywiz.korte.Token
+import com.soywiz.korte.block.BlockText
+import com.soywiz.korte.filter.*
 import com.soywiz.korte.tag.*
 import com.soywiz.korte.util.Dynamic
+import java.util.*
 import kotlin.collections.set
 
 class Template(
-	val context: TemplateFactoryContext,
+	val factory: TemplateFactory,
 	val template: String,
 	val config: Template.Config = Config()
 ) {
+	val blocks = hashMapOf<String, Block>()
+	val parseContext = ParseContext(this, config)
 	val templateTokens = Token.Companion.tokenize(template)
-	val node = BlockNode.Companion.parse(templateTokens, config)
+	val node = Block.Companion.parse(templateTokens, parseContext)
+
+	class ParseContext(val template: Template, val config: Config)
 
 	class Config(
 		extraTags: List<Tag> = listOf(),
-		extraFilters: List<Template.Filter> = listOf()
+		extraFilters: List<Filter> = listOf()
 	) {
 		val integratedFilters = listOf(
-			Filter("length") { subject, _ -> Dynamic.length(subject) },
-			Filter("capitalize") { subject, _ -> Dynamic.toString(subject).toLowerCase().capitalize() },
-			Filter("upper") { subject, _ -> Dynamic.toString(subject).toUpperCase() },
-			Filter("lower") { subject, _ -> Dynamic.toString(subject).toLowerCase() },
-			Filter("trim") { subject, _ -> Dynamic.toString(subject).trim() },
-			Filter("quote") { subject, _ -> Dynamic.toString(subject).quote() },
-			Filter("join") { subject, args -> Dynamic.toIterable(subject).map { Dynamic.toString(it) }.joinToString(Dynamic.toString(args[0])) },
-			Filter("file_exists") { subject, _ -> java.io.File(Dynamic.toString(subject)).exists() }
+			FilterLength, FilterCapitalize, FilterUpper,
+			FilterLower, FilterTrim, FilterQuote, FilterJoin,
+			FilterSlice, FilterReverse
 		)
 
-		private val allTags = listOf(TagEmpty, TagIf, TagFor, SetTag, TagDebug) + extraTags
+		val integratedTags = listOf(
+			TagEmpty, TagIf, TagFor, SetTag, TagDebug, TagBlock, TagExtends
+		)
+
+		private val allTags = integratedTags + extraTags
 		private val allFilters = integratedFilters + extraFilters
 
 		val tags = hashMapOf<String, Tag>().apply {
@@ -43,39 +48,76 @@ class Template(
 			}
 		}
 
-		val filters = hashMapOf<String, Template.Filter>().apply {
+		val filters = hashMapOf<String, Filter>().apply {
 			for (filter in allFilters) this[filter.name] = filter
 		}
 	}
-
-	data class Filter(val name: String, val eval: (subject: Any?, args: List<Any?>) -> Any?)
 
 	class Scope(val map: Any?, val parent: Template.Scope? = null) {
 		operator fun get(key: Any?): Any? = Dynamic.accessAny(map, key) ?: parent?.get(key)
 		operator fun set(key: Any?, value: Any?): Unit = run { Dynamic.setAny(map, key, value) }
 	}
 
-	operator fun invoke(args: Any?): String {
-		val str = StringBuilder()
-		val context = Template.Context(Scope(args), config, write = { str.append(it) })
-		context.createScope { node.eval(context) }
-		return str.toString()
+	suspend fun eval(context: Template.EvalContext) = asyncFun {
+		val prevTemplate = context.currentTemplate
+		try {
+			context.currentTemplate = this@Template
+			context.templateStack.addLast(this@Template)
+			try {
+				context.createScope { node.eval(context) }
+			} finally {
+				context.templateStack.removeLast()
+			}
+		} catch (e: InterruptedException) {
+		} finally {
+			context.currentTemplate = prevTemplate
+		}
 	}
 
-	operator fun invoke(vararg args: Pair<String, Any?>): String {
+
+	operator suspend fun invoke(args: Any?): String = asyncFun {
+		val str = StringBuilder()
+		val context = Template.EvalContext(this, this, Scope(args), config, write = { str.append(it) })
+		eval(context)
+		str.toString()
+	}
+
+	operator suspend fun invoke(vararg args: Pair<String, Any?>): String {
 		return invoke(hashMapOf(*args))
 	}
 
-	class Context(var scope: Template.Scope, val config: Template.Config, val write: (str: String) -> Unit) {
+	class EvalContext(
+		val rootTemplate: Template,
+		var currentTemplate: Template,
+		var scope: Template.Scope,
+		val config: Template.Config,
+		val write: (str: String) -> Unit,
+		var templateStack: LinkedList<Template> = LinkedList()
+	) {
 		inline fun createScope(callback: () -> Unit) = this.apply {
 			val old = this.scope
-			this.scope = Template.Scope(hashMapOf<Any?, Any?>(), old)
-			callback()
-			this.scope = old
+			try {
+				this.scope = Template.Scope(hashMapOf<Any?, Any?>(), old)
+				callback()
+			} finally {
+				this.scope = old
+			}
 		}
+	}
+
+	fun getBlock(context: Template.EvalContext, name: String): Block {
+		for (t in context.templateStack) {
+			val block = t.blocks[name]
+			if (block != null) return block
+		}
+		return BlockText("")
+	}
+
+	fun addBlock(name: String, body: Block) {
+		blocks[name] = body
 	}
 }
 
 suspend fun Template(template: String, config: Template.Config = Template.Config()): Template = asyncFun {
-	TemplateFactoryContext(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config).get("template")
+	TemplateFactory(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config).get("template")
 }

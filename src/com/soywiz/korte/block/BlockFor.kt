@@ -1,12 +1,13 @@
 package com.soywiz.korte.block
 
-import com.soywiz.korte.BlockNode
+import com.soywiz.korio.async.asyncFun
+import com.soywiz.korte.Block
 import com.soywiz.korte.ExprNode
 import com.soywiz.korte.Template
 import com.soywiz.korte.util.Dynamic
 
-data class BlockFor(val varnames: List<String>, val expr: ExprNode, val loop: BlockNode, val elseNode: BlockNode?) : BlockNode {
-	override fun eval(context: Template.Context) {
+data class BlockFor(val varnames: List<String>, val expr: ExprNode, val loop: Block, val elseNode: Block?) : Block {
+	override suspend fun eval(context: Template.EvalContext) = asyncFun<Unit> {
 		context.createScope {
 			var index = 0
 			val items = Dynamic.toIterable(expr.eval(context)).toList()

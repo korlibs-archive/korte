@@ -4,7 +4,7 @@ import com.soywiz.korte.ExprNode
 import com.soywiz.korte.Tag
 import com.soywiz.korte.block.BlockSet
 
-val SetTag = Tag("set", setOf(), null) { parts ->
+val SetTag = Tag("set", setOf(), null) { context, parts ->
 	val main = parts[0]
 	val tr = ExprNode.Token.tokenize(main.token.content)
 	val varname = ExprNode.parseId(tr)
