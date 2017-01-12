@@ -7,7 +7,7 @@ import com.soywiz.korio.util.quote
 import com.soywiz.korio.vfs.MemoryVfs
 import com.soywiz.korte.BlockNode
 import com.soywiz.korte.Token
-import com.soywiz.korte.tag.IfTag
+import com.soywiz.korte.tag.*
 import kotlin.collections.set
 
 class Template(
@@ -33,7 +33,7 @@ class Template(
 			Filter("file_exists") { subject, _ -> java.io.File(Dynamic.toString(subject)).exists() }
 		)
 
-		private val allTags = listOf(Tag.EMPTY, IfTag, Tag.FOR, Tag.SET, Tag.DEBUG) + extraTags
+		private val allTags = listOf(EmptyTag, IfTag, ForTag, SetTag, DebugTag) + extraTags
 		private val allFilters = integratedFilters + extraFilters
 
 		val tags = hashMapOf<String, Tag>().apply {

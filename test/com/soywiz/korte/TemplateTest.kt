@@ -22,7 +22,15 @@ class TemplateTest {
 	}
 
 	@Test fun testFor() = sync {
-		Assert.assertEquals("123", Template("{% for n in numbers %}{{ n }}{% end %}")("numbers" to listOf(1, 2, 3)))
+		val tpl = Template("{% for n in numbers %}{{ n }}{% end %}")
+		Assert.assertEquals("", tpl("numbers" to listOf<Int>()))
+		Assert.assertEquals("123", tpl("numbers" to listOf(1, 2, 3)))
+	}
+
+	@Test fun testForElse() = sync {
+		val tpl = Template("{% for n in numbers %}{{ n }}{% else %}none{% end %}")
+		Assert.assertEquals("123", tpl("numbers" to listOf(1, 2, 3)))
+		Assert.assertEquals("none", tpl("numbers" to listOf<Int>()))
 	}
 
 	@Test fun testDebug() = sync {

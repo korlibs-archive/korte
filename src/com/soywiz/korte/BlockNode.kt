@@ -3,6 +3,7 @@ package com.soywiz.korte
 import com.soywiz.korio.error.invalidOp
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.ListReader
+import com.soywiz.korte.tag.EmptyTag
 
 interface BlockNode {
 	fun eval(context: Template.Context): Unit
@@ -29,12 +30,17 @@ interface BlockNode {
 		}
 	}
 
-	data class FOR(val varname: String, val expr: ExprNode, val loop: BlockNode) : BlockNode {
+	data class FOR(val varname: String, val expr: ExprNode, val loop: BlockNode, val elseNode: BlockNode?) : BlockNode {
 		override fun eval(context: Template.Context) {
 			context.createScope {
+				var count = 0
 				for (v in Dynamic.toIterable(expr.eval(context))) {
 					context.scope[varname] = v
 					loop.eval(context)
+					count++
+				}
+				if (count == 0) {
+					elseNode?.eval(context)
 				}
 			}
 		}
@@ -97,7 +103,7 @@ interface BlockNode {
 
 				return tag.buildNode(parts)
 			}
-			return handle(Tag.EMPTY, Token.TTag("", ""))
+			return handle(EmptyTag, Token.TTag("", ""))
 		}
 	}
 }
