@@ -12,7 +12,7 @@ import com.soywiz.korte.util.Dynamic
 import java.util.*
 import kotlin.collections.set
 
-class Template(
+class Template internal constructor(
 	val factory: TemplateFactory,
 	val template: String,
 	val config: Template.Config = Config()
@@ -20,7 +20,12 @@ class Template(
 	val blocks = hashMapOf<String, Block>()
 	val parseContext = ParseContext(this, config)
 	val templateTokens = Token.Companion.tokenize(template)
-	val node = Block.Companion.parse(templateTokens, parseContext)
+	lateinit var rootNode: Block
+
+	suspend fun init(): Template = asyncFun {
+		rootNode = Block.parse(templateTokens, parseContext)
+		this
+	}
 
 	class ParseContext(val template: Template, val config: Config)
 
@@ -64,7 +69,7 @@ class Template(
 			context.currentTemplate = this@Template
 			context.templateStack.addLast(this@Template)
 			try {
-				context.createScope { node.eval(context) }
+				context.createScope { rootNode.eval(context) }
 			} finally {
 				context.templateStack.removeLast()
 			}

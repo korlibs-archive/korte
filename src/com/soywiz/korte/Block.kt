@@ -1,5 +1,7 @@
 package com.soywiz.korte
 
+import com.soywiz.korio.async.asyncFun
+import com.soywiz.korio.async.await
 import com.soywiz.korio.error.invalidOp
 import com.soywiz.korio.util.ListReader
 import com.soywiz.korte.block.BlockExpr
@@ -13,9 +15,10 @@ interface Block {
 	companion object {
 		fun group(children: List<Block>): Block = if (children.size == 1) children[0] else BlockGroup(children)
 
-		fun parse(tokens: List<Token>, parseContext: Template.ParseContext): Block {
+		class Parse(val tokens: List<Token>, val parseContext: Template.ParseContext) {
 			val tr = ListReader(tokens)
-			fun handle(tag: Tag, token: Token.TTag): Block {
+
+			suspend fun handle(tag: Tag, token: Token.TTag): Block = asyncFun {
 				val parts = arrayListOf<Tag.Part>()
 				var currentToken = token
 				val children = arrayListOf<Block>()
@@ -42,7 +45,7 @@ interface Block {
 									if (newtag.end != null) {
 										children += handle(newtag, it)
 									} else {
-										children += newtag.buildNode(parseContext, listOf(Tag.Part(it, BlockText(""))))
+										children += newtag.buildNode.await(Tag.BuildContext(parseContext, listOf(Tag.Part(it, BlockText("")))))
 									}
 								}
 							}
@@ -53,9 +56,12 @@ interface Block {
 
 				emitPart()
 
-				return tag.buildNode(parseContext, parts)
+				tag.buildNode.await(Tag.BuildContext(parseContext, parts))
 			}
-			return handle(TagEmpty, Token.TTag("", ""))
+		}
+
+		suspend fun parse(tokens: List<Token>, parseContext: Template.ParseContext): Block = asyncFun {
+			Parse(tokens, parseContext).handle(TagEmpty, Token.TTag("", ""))
 		}
 	}
 }

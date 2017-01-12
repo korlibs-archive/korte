@@ -5,7 +5,7 @@ import com.soywiz.korte.ExprNode
 import com.soywiz.korte.Tag
 import com.soywiz.korte.block.BlockIf
 
-val TagIf = Tag("if", setOf("else", "elseif"), "end") { context, parts ->
+val TagIf = Tag("if", setOf("else", "elseif"), "end") {
 	val ifBranches = arrayListOf<Pair<ExprNode, Block>>()
 	var elseBranch: Block? = null
 

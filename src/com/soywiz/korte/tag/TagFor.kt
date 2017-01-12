@@ -5,7 +5,7 @@ import com.soywiz.korte.Tag
 import com.soywiz.korte.block.BlockFor
 import com.soywiz.korte.tryRead
 
-val TagFor = Tag("for", setOf("else"), "end") { context, parts ->
+val TagFor = Tag("for", setOf("else"), "end") {
 	val main = parts[0]
 	val elseTag = parts.getOrNull(1)?.body
 	val tr = ExprNode.Token.tokenize(main.token.content)

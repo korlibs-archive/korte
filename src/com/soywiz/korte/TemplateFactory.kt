@@ -11,6 +11,6 @@ class TemplateFactory(
 
 	suspend operator fun get(name: String): Template = cache(name) {
 		val content = root[name].readString()
-		Template(this@TemplateFactory, content, config)
+		Template(this@TemplateFactory, content, config).init()
 	}
 }

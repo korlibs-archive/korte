@@ -131,8 +131,8 @@ class TemplateTest {
 			override suspend fun eval(context: Template.EvalContext) = asyncFun { context.write("CUSTOM($text)") }
 		}
 
-		val CustomTag = Tag("custom", setOf(), null) { ctx, args ->
-			CustomNode(args.first().token.content)
+		val CustomTag = Tag("custom", setOf(), null) {
+			CustomNode(parts.first().token.content)
 		}
 
 		Assert.assertEquals(
