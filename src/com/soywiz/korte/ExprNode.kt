@@ -1,10 +1,11 @@
 package com.soywiz.korte
 
 import com.soywiz.korio.error.invalidOp
-import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.ListReader
 import com.soywiz.korio.util.StrReader
 import com.soywiz.korio.util.isLetterDigitOrUnderscore
+import com.soywiz.korio.util.unescape
+import com.soywiz.korte.util.Dynamic
 
 interface ExprNode {
 	fun eval(context: Template.Context): Any?
@@ -63,18 +64,6 @@ interface ExprNode {
 	}
 
 	companion object {
-		fun ListReader<Token>.expectPeek(vararg types: String): ExprNode.Token {
-			val token = this.peek()
-			if (token.text !in types) throw java.lang.RuntimeException("Expected ${types.joinToString(", ")} but found '${token.text}'")
-			return token
-		}
-
-		fun ListReader<Token>.expect(vararg types: String): ExprNode.Token {
-			val token = this.read()
-			if (token.text !in types) throw java.lang.RuntimeException("Expected ${types.joinToString(", ")}")
-			return token
-		}
-
 		fun parse(str: String): ExprNode {
 			val tokens = ExprNode.Token.Companion.tokenize(str)
 			return ExprNode.Companion.parseFullExpr(tokens)
@@ -250,7 +239,7 @@ interface ExprNode {
 						val strStart = r.read()
 						val strBody = r.readUntil(strStart) ?: ""
 						val strEnd = r.read()
-						emit(ExprNode.Token.TString(strStart + strBody + strEnd, strBody))
+						emit(ExprNode.Token.TString(strStart + strBody + strEnd, strBody.unescape()))
 					}
 					val end = r.pos
 					if (end == start) invalidOp("Don't know how to handle '${r.peek()}'")
@@ -260,4 +249,26 @@ interface ExprNode {
 			}
 		}
 	}
+}
+
+fun ListReader<ExprNode.Token>.tryRead(vararg types: String): ExprNode.Token? {
+	val token = this.peek()
+	if (token.text in types) {
+		this.read()
+		return token
+	} else {
+		return null
+	}
+}
+
+fun ListReader<ExprNode.Token>.expectPeek(vararg types: String): ExprNode.Token {
+	val token = this.peek()
+	if (token.text !in types) throw java.lang.RuntimeException("Expected ${types.joinToString(", ")} but found '${token.text}'")
+	return token
+}
+
+fun ListReader<ExprNode.Token>.expect(vararg types: String): ExprNode.Token {
+	val token = this.read()
+	if (token.text !in types) throw java.lang.RuntimeException("Expected ${types.joinToString(", ")}")
+	return token
 }

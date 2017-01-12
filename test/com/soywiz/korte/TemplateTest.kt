@@ -27,6 +27,23 @@ class TemplateTest {
 		Assert.assertEquals("123", tpl("numbers" to listOf(1, 2, 3)))
 	}
 
+	@Test fun testForAdv() = sync {
+		val tpl = Template("{% for n in numbers %}{{ n }}:{{ loop.index0 }}:{{ loop.index }}:{{ loop.revindex }}:{{ loop.revindex0 }}:{{ loop.first }}:{{ loop.last }}:{{ loop.length }}{{ '\\n' }}{% end %}")
+		Assert.assertEquals(
+			"""
+				a:0:1:2:3:true:false:3
+				b:1:2:1:2:false:false:3
+				c:2:3:0:1:false:true:3
+			""".trimIndent().trim(),
+			tpl("numbers" to listOf("a", "b", "c")).trim()
+		)
+	}
+
+	@Test fun testForMap() = sync {
+		val tpl = Template("{% for k, v in map %}{{ k }}:{{v}}{% end %}")
+		Assert.assertEquals("a:10b:c", tpl("map" to mapOf("a" to 10, "b" to "c")))
+	}
+
 	@Test fun testForElse() = sync {
 		val tpl = Template("{% for n in numbers %}{{ n }}{% else %}none{% end %}")
 		Assert.assertEquals("123", tpl("numbers" to listOf(1, 2, 3)))
