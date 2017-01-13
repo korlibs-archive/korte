@@ -161,6 +161,20 @@ class TemplateTest {
 		Assert.assertEquals("""{"foo": 1, "bar": 2}""", Template("{{ { 'foo': 1, 'bar': 2 } }}")())
 	}
 
+	@Test fun testFrontMatter() = sync {
+		Assert.assertEquals(
+			"""hello""",
+			Template(
+				"""
+					---
+					title: hello
+					---
+					{{ title }}
+				""".trimIndent()
+			)()
+		)
+	}
+
 	//@Test fun testStringInterpolation() = sync {
 	//	Assert.assertEquals("a2b", Template("{{ \"a#{7 - 5}b\" }}")())
 	//}

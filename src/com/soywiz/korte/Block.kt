@@ -7,6 +7,7 @@ import com.soywiz.korio.util.ListReader
 import com.soywiz.korte.block.BlockExpr
 import com.soywiz.korte.block.BlockGroup
 import com.soywiz.korte.block.BlockText
+import com.soywiz.korte.serialization.yaml.Yaml
 import com.soywiz.korte.tag.TagEmpty
 
 interface Block {
@@ -30,7 +31,27 @@ interface Block {
 				loop@ while (!tr.eof) {
 					val it = tr.read()
 					when (it) {
-						is Token.TLiteral -> children += BlockText(it.content)
+						is Token.TLiteral -> {
+							var text = it.content
+							// it.content.startsWith("---")
+							if (children.isEmpty() && it.content.startsWith("---")) {
+								val lines = it.content.split('\n')
+								if (lines[0] == "---") {
+									val slines = lines.drop(1)
+									val index = slines.indexOf("---")
+									if (index >= 0) {
+										val yamlLines = slines.slice(0 until index)
+										val outside = slines.slice(index + 1 until slines.size)
+										val yaml = Yaml.read(yamlLines.joinToString("\n"))
+										if (yaml is Map<*, *>) {
+											parseContext.template.frontMatter.putAll(yaml as Map<String, Any?>)
+										}
+										text = outside.joinToString("\n")
+									}
+								}
+							}
+							children += BlockText(text)
+						}
 						is Token.TExpr -> children += BlockExpr(ExprNode.parse(it.content))
 						is Token.TTag -> {
 							when (it.name) {

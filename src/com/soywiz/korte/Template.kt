@@ -14,6 +14,7 @@ class Template internal constructor(
 	val template: String,
 	val config: TemplateConfig = TemplateConfig()
 ) {
+	val frontMatter = hashMapOf<String, Any?>()
 	val blocks = hashMapOf<String, Block>()
 	val parseContext = ParseContext(this, config)
 	val templateTokens = Token.Companion.tokenize(template)
@@ -53,7 +54,9 @@ class Template internal constructor(
 
 	operator suspend fun invoke(args: Any?): String = asyncFun {
 		val str = StringBuilder()
-		val context = Template.EvalContext(this, this, Scope(args), config, write = { str.append(it) })
+		val scope = Scope(args)
+		for ((k, v) in frontMatter) scope[k] = v
+		val context = Template.EvalContext(this, this, scope, config, write = { str.append(it) })
 		eval(context)
 		str.toString()
 	}

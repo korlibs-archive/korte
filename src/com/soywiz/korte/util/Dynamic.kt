@@ -244,20 +244,19 @@ object Dynamic {
 	//fun toFixNumber(value: Double): Any = if (value == value.toInt().toDouble()) value.toInt() else value
 
 	fun toString(value: Any?): String {
-		when (value) {
+		return when (value) {
+			null -> ""
 			is Double -> {
 				if (value == value.toInt().toDouble()) {
-					return value.toInt().toString()
+					value.toInt().toString()
+				} else {
+					value.toString()
 				}
 			}
-			is Iterable<*> -> {
-				return "[" + value.map { toString(it) }.joinToString(", ") + "]"
-			}
-			is Map<*, *> -> {
-				return "{" + value.map { toString(it.key).quote() + ": " + toString(it.value) }.joinToString(", ") + "}"
-			}
+			is Iterable<*> -> "[" + value.map { toString(it) }.joinToString(", ") + "]"
+			is Map<*, *> -> "{" + value.map { toString(it.key).quote() + ": " + toString(it.value) }.joinToString(", ") + "}"
+			else -> value.toString()
 		}
-		return value.toString()
 	}
 
 	fun binop(l: Any?, r: Any?, op: String): Any? {
