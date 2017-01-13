@@ -4,6 +4,8 @@ import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.vfs.MemoryVfs
 import com.soywiz.korte.Token
+import com.soywiz.korte.block.BlockExtends
+import com.soywiz.korte.block.BlockGroup
 import com.soywiz.korte.block.BlockText
 import com.soywiz.korte.util.Dynamic
 import java.util.*
@@ -14,14 +16,21 @@ class Template internal constructor(
 	val template: String,
 	val config: TemplateConfig = TemplateConfig()
 ) {
+	var hasJekyllLayout = false; private set
 	val frontMatter = hashMapOf<String, Any?>()
 	val blocks = hashMapOf<String, Block>()
 	val parseContext = ParseContext(this, config)
 	val templateTokens = Token.Companion.tokenize(template)
-	lateinit var rootNode: Block
+	lateinit var rootNode: Block; private set
 
 	suspend fun init(): Template = asyncFun {
 		rootNode = Block.parse(templateTokens, parseContext)
+		val layout = frontMatter["layout"]
+		if (layout != null) {
+			hasJekyllLayout = true
+			addBlock("content", rootNode)
+			rootNode = BlockGroup(listOf(BlockExtends(ExprNode.LIT(layout))))
+		}
 		this
 	}
 
@@ -29,15 +38,16 @@ class Template internal constructor(
 		val templates: Templates get() = template.templates
 	}
 
-
 	class Scope(val map: Any?, val parent: Template.Scope? = null) {
 		suspend fun get(key: Any?): Any? = asyncFun { Dynamic.accessAny(map, key) ?: parent?.get(key) }
 		suspend fun set(key: Any?, value: Any?): Unit = run { Dynamic.setAny(map, key, value) }
 	}
 
 	suspend fun eval(context: Template.EvalContext) = asyncFun {
-		val prevTemplate = context.currentTemplate
+		val oldParentTemplate = context.parentTemplate
+		val oldCurrentTemplate = context.currentTemplate
 		try {
+			context.parentTemplate = context.templateStack.lastOrNull()
 			context.currentTemplate = this@Template
 			context.templateStack.addLast(this@Template)
 			try {
@@ -47,7 +57,8 @@ class Template internal constructor(
 			}
 		} catch (e: InterruptedException) {
 		} finally {
-			context.currentTemplate = prevTemplate
+			context.parentTemplate = oldParentTemplate
+			context.currentTemplate = oldCurrentTemplate
 		}
 	}
 
@@ -70,10 +81,39 @@ class Template internal constructor(
 		var currentTemplate: Template,
 		var scope: Template.Scope,
 		val config: TemplateConfig,
-		val write: (str: String) -> Unit,
+		var write: (str: String) -> Unit,
 		var templateStack: LinkedList<Template> = LinkedList()
 	) {
 		val templates = rootTemplate.templates
+
+		var parentTemplate: Template? = null
+
+		inline fun capture(callback: () -> Unit): String = this.run {
+			var out = ""
+			val old = write
+			try {
+				write = { out += it }
+				callback()
+			} finally {
+				write = old
+			}
+			out
+		}
+
+		inline fun tempDropTemplate(callback: () -> Unit) = this.apply {
+			val oldParentTemplate = parentTemplate
+			val oldCurrentTemplate = currentTemplate
+			val oldTemplateStack = this@EvalContext.templateStack.removeLast()
+			try {
+				currentTemplate = oldTemplateStack
+				parentTemplate = templateStack.last
+				callback()
+			} finally {
+				templateStack.addLast(oldTemplateStack)
+				parentTemplate = oldParentTemplate
+				currentTemplate = oldCurrentTemplate
+			}
+		}
 
 		inline fun createScope(callback: () -> Unit) = this.apply {
 			val old = this.scope

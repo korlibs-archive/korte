@@ -76,4 +76,45 @@ class TemplateInheritanceTest {
 			)).get("main")()
 		)
 	}
+
+	@Test
+	fun jekyllLayout() = sync {
+		Assert.assertEquals(
+			"Hello Carlos.",
+			Templates(MemoryVfsMix(
+				"mylayout" to """Hello {{ content }}.""",
+				"main" to """
+					---
+					layout: mylayout
+					name: Carlos
+					---
+					{{ name }}
+				""".trimIndent()
+			)).get("main")()
+		)
+	}
+
+	@Test
+	fun jekyllLayoutEx() = sync {
+		Assert.assertEquals(
+			"<html><div>side</div><div><h1>Content</h1></div></html>",
+			Templates(MemoryVfsMix(
+				"root" to """
+					<html>{{ content }}</html>
+                """.trimIndent(),
+				"twocolumns" to """
+					---
+					layout: root
+					---
+					<div>side</div><div>{{ content }}</div>
+                """.trimIndent(),
+				"main" to """
+					---
+					layout: twocolumns
+					---
+					<h1>Content</h1>
+				""".trimIndent()
+			)).get("main")()
+		)
+	}
 }

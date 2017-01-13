@@ -12,7 +12,18 @@ interface ExprNode {
 	suspend fun eval(context: Template.EvalContext): Any?
 
 	data class VAR(val name: String) : ExprNode {
-		override suspend fun eval(context: Template.EvalContext): Any? = context.scope.get(name)
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun {
+			if (context.rootTemplate.hasJekyllLayout && name == "content") {
+				context.capture {
+					context.tempDropTemplate {
+						val block = context.parentTemplate?.blocks?.get(name)
+						block?.eval(context)
+					}
+				}
+			} else {
+				context.scope.get(name)
+			}
+		}
 	}
 
 	data class LIT(val value: Any?) : ExprNode {
@@ -71,7 +82,7 @@ interface ExprNode {
 	companion object {
 		fun parse(str: String): ExprNode {
 			val tokens = ExprNode.Token.Companion.tokenize(str)
-			return ExprNode.Companion.parseFullExpr(tokens)
+			return ExprNode.parseFullExpr(tokens)
 		}
 
 		fun parseId(r: ListReader<Token>): String {
@@ -84,7 +95,7 @@ interface ExprNode {
 		}
 
 		fun parseFullExpr(r: ListReader<Token>): ExprNode {
-			val result = ExprNode.Companion.parseExpr(r)
+			val result = ExprNode.parseExpr(r)
 			if (r.hasMore && r.peek() !is ExprNode.Token.TEnd) {
 				invalidOp("Expected expression at " + r.peek() + " :: " + r.list.map { it.text }.joinToString(""))
 			}
@@ -98,11 +109,11 @@ interface ExprNode {
 		)
 
 		fun parseExpr(r: ListReader<Token>): ExprNode {
-			var result = ExprNode.Companion.parseFinal(r)
+			var result = ExprNode.parseFinal(r)
 			while (r.hasMore) {
-				if (r.peek() !is ExprNode.Token.TOperator || r.peek().text !in ExprNode.Companion.BINOPS) break
+				if (r.peek() !is ExprNode.Token.TOperator || r.peek().text !in ExprNode.BINOPS) break
 				val operator = r.read().text
-				val right = ExprNode.Companion.parseFinal(r)
+				val right = ExprNode.parseFinal(r)
 				result = BINOP(result, right, operator)
 			}
 			// @TODO: Fix order!
@@ -117,7 +128,7 @@ interface ExprNode {
 				}
 				"(" -> {
 					r.read()
-					val result = ExprNode.Companion.parseExpr(r)
+					val result = ExprNode.parseExpr(r)
 					if (r.read().text != ")") throw RuntimeException("Expected ')'")
 					result
 				}
@@ -126,7 +137,7 @@ interface ExprNode {
 					r.read()
 					val items = arrayListOf<ExprNode>()
 					loop@ while (r.hasMore && r.peek().text != "]") {
-						items += ExprNode.Companion.parseExpr(r)
+						items += ExprNode.parseExpr(r)
 						when (r.peek().text) {
 							"," -> r.read()
 							"]" -> continue@loop
@@ -141,9 +152,9 @@ interface ExprNode {
 					r.read()
 					val items = arrayListOf<Pair<ExprNode, ExprNode>>()
 					loop@ while (r.hasMore && r.peek().text != "}") {
-						val k = ExprNode.Companion.parseFinal(r)
+						val k = ExprNode.parseFinal(r)
 						r.expect(":")
-						val v = ExprNode.Companion.parseExpr(r)
+						val v = ExprNode.parseExpr(r)
 						items += k to v
 						when (r.peek().text) {
 							"," -> r.read()
@@ -155,11 +166,16 @@ interface ExprNode {
 					OBJECT_LIT(items)
 				}
 				else -> {
+					// Number
 					if (r.peek() is ExprNode.Token.TNumber) {
 						LIT(r.read().text.toDouble())
-					} else if (r.peek() is ExprNode.Token.TString) {
+					}
+					// String
+					else if (r.peek() is ExprNode.Token.TString) {
 						LIT((r.read() as Token.TString).processedValue)
-					} else {
+					}
+					// ID
+					else {
 						VAR(r.read().text)
 					}
 				}
@@ -175,7 +191,7 @@ interface ExprNode {
 					}
 					"[" -> {
 						r.read()
-						val expr = ExprNode.Companion.parseExpr(r)
+						val expr = ExprNode.parseExpr(r)
 						construct = ACCESS(construct, expr)
 						val end = r.read()
 						if (end.text != "]") throw RuntimeException("Expected ']' but found $end")
@@ -187,7 +203,7 @@ interface ExprNode {
 						if (r.peek().text == "(") {
 							r.read()
 							callargsloop@ while (r.hasMore && r.peek().text != ")") {
-								args += ExprNode.Companion.parseExpr(r)
+								args += ExprNode.parseExpr(r)
 								when (r.expectPeek(",", ")").text) {
 									"," -> r.read()
 									")" -> break@callargsloop
@@ -201,7 +217,7 @@ interface ExprNode {
 						r.read()
 						val args = arrayListOf<ExprNode>()
 						callargsloop@ while (r.hasMore && r.peek().text != ")") {
-							args += ExprNode.Companion.parseExpr(r)
+							args += ExprNode.parseExpr(r)
 							when (r.expectPeek(",", ")").text) {
 								"," -> r.read()
 								")" -> break@callargsloop
