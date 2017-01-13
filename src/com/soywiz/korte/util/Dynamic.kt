@@ -1,12 +1,19 @@
 package com.soywiz.korte.util
 
+import com.soywiz.korio.async.Promise
+import com.soywiz.korio.async.asyncFun
+import com.soywiz.korio.async.invokeSuspend
+import com.soywiz.korio.error.ignoreErrors
 import com.soywiz.korio.error.invalidOp
 import com.soywiz.korio.error.noImpl
 import com.soywiz.korio.util.quote
 import java.lang.reflect.Array
+import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.*
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineIntrinsics
 
 object Dynamic {
 	@Suppress("UNCHECKED_CAST")
@@ -29,18 +36,29 @@ object Dynamic {
 		field?.set(instance, value)
 	}
 
-	fun <T : Any> getField(instance: T?, name: String): Any? {
-		if (instance == null) return null
-		val getter = instance.javaClass.getMethod("get${name.capitalize()}")
-		if (getter != null) {
-			getter.isAccessible = true
-			return getter.invoke(instance)
+	suspend fun <T : Any> getField(instance: T?, name: String): Any? = asyncFun {
+		if (instance == null) {
+			null
 		} else {
-			val field = instance.javaClass.declaredFields.find { it.name == name }
+			val clazz = instance.javaClass
+			val dmethods = clazz.declaredMethods
+			val getterName = "get${name.capitalize()}"
+			val getter = ignoreErrors { dmethods.firstOrNull { it.name == getterName } }
+			val method = ignoreErrors { dmethods.firstOrNull { it.name == name } }
+			if (getter != null) {
+				getter.isAccessible = true
+				getter.invokeSuspend(instance, listOf())
+			} else if (method != null) {
+				method.isAccessible = true
+				//method.invoke(instance)
+				method.invokeSuspend(instance, listOf())
+			} else {
+				val field = clazz.declaredFields.find { it.name == name }
 
-			//val field = instance.javaClass.getField(name)
-			field?.isAccessible = true
-			return field?.get(instance)
+				//val field = instance.javaClass.getField(name)
+				field?.isAccessible = true
+				field?.get(instance)
+			}
 		}
 	}
 
@@ -99,8 +117,8 @@ object Dynamic {
 		}
 	}
 
-	fun accessAny(instance: Any?, key: Any?): Any? {
-		return when (instance) {
+	suspend fun accessAny(instance: Any?, key: Any?): Any? = asyncFun {
+		when (instance) {
 			null -> null
 			is Map<*, *> -> instance[key]
 			is Iterable<*> -> instance.toList()[toInt(key)]

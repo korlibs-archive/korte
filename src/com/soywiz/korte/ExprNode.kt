@@ -1,5 +1,6 @@
 package com.soywiz.korte
 
+import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.error.invalidOp
 import com.soywiz.korio.util.ListReader
 import com.soywiz.korio.util.StrReader
@@ -8,63 +9,63 @@ import com.soywiz.korio.util.unescape
 import com.soywiz.korte.util.Dynamic
 
 interface ExprNode {
-	fun eval(context: Template.EvalContext): Any?
+	suspend fun eval(context: Template.EvalContext): Any?
 
 	data class VAR(val name: String) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? = context.scope[name]
+		override suspend fun eval(context: Template.EvalContext): Any? = context.scope.get(name)
 	}
 
 	data class LIT(val value: Any?) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? = value
+		override suspend fun eval(context: Template.EvalContext): Any? = value
 	}
 
 	data class ARRAY_LIT(val items: List<ExprNode>) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? = items.map { it.eval(context) }
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun { items.map { it.eval(context) } }
 	}
 
 	data class OBJECT_LIT(val items: List<Pair<ExprNode, ExprNode>>) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? = items.map {  it.first.eval(context) to it.second.eval(context) }.toMap()
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun { items.map { it.first.eval(context) to it.second.eval(context) }.toMap() }
 	}
 
 	data class FILTER(val name: String, val expr: ExprNode, val params: List<ExprNode>) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? {
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun {
 			val filter = context.config.filters[name] ?: invalidOp("Unknown filter '$name'")
-			return filter.eval(expr.eval(context), params.map { it.eval(context) })
+			filter.eval(expr.eval(context), params.map { it.eval(context) })
 		}
 	}
 
 	data class ACCESS(val expr: ExprNode, val name: ExprNode) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? {
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun {
 			val obj = expr.eval(context)
 			val key = name.eval(context)
 			try {
-				return Dynamic.accessAny(obj, key)
+				Dynamic.accessAny(obj, key)
 			} catch (t: Throwable) {
 				try {
-					return Dynamic.callAny(obj, key, listOf())
+					Dynamic.callAny(obj, key, listOf())
 				} catch (t: Throwable) {
-					return null
+					null
 				}
 			}
 		}
 	}
 
 	data class CALL(val method: ExprNode, val args: List<ExprNode>) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? {
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun {
 			if (method !is ExprNode.ACCESS) {
-				return Dynamic.callAny(method.eval(context), args.map { it.eval(context) })
+				Dynamic.callAny(method.eval(context), args.map { it.eval(context) })
 			} else {
-				return Dynamic.callAny(method.expr.eval(context), method.name.eval(context), args.map { it.eval(context) })
+				Dynamic.callAny(method.expr.eval(context), method.name.eval(context), args.map { it.eval(context) })
 			}
 		}
 	}
 
 	data class BINOP(val l: ExprNode, val r: ExprNode, val op: String) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? = Dynamic.binop(l.eval(context), r.eval(context), op)
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun { Dynamic.binop(l.eval(context), r.eval(context), op) }
 	}
 
 	data class UNOP(val r: ExprNode, val op: String) : ExprNode {
-		override fun eval(context: Template.EvalContext): Any? = Dynamic.unop(r.eval(context), op)
+		override suspend fun eval(context: Template.EvalContext): Any? = asyncFun { Dynamic.unop(r.eval(context), op) }
 	}
 
 	companion object {

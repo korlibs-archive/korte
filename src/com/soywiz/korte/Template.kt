@@ -31,8 +31,8 @@ class Template internal constructor(
 
 
 	class Scope(val map: Any?, val parent: Template.Scope? = null) {
-		operator fun get(key: Any?): Any? = Dynamic.accessAny(map, key) ?: parent?.get(key)
-		operator fun set(key: Any?, value: Any?): Unit = run { Dynamic.setAny(map, key, value) }
+		suspend fun get(key: Any?): Any? = asyncFun { Dynamic.accessAny(map, key) ?: parent?.get(key) }
+		suspend fun set(key: Any?, value: Any?): Unit = run { Dynamic.setAny(map, key, value) }
 	}
 
 	suspend fun eval(context: Template.EvalContext) = asyncFun {
@@ -55,7 +55,7 @@ class Template internal constructor(
 	operator suspend fun invoke(args: Any?): String = asyncFun {
 		val str = StringBuilder()
 		val scope = Scope(args)
-		for ((k, v) in frontMatter) scope[k] = v
+		for ((k, v) in frontMatter) scope.set(k, v)
 		val context = Template.EvalContext(this, this, scope, config, write = { str.append(it) })
 		eval(context)
 		str.toString()

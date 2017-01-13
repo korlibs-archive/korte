@@ -7,6 +7,6 @@ import com.soywiz.korte.Template
 
 data class BlockSet(val varname: String, val expr: ExprNode) : Block {
 	override suspend fun eval(context: Template.EvalContext) = asyncFun {
-		context.scope[varname] = expr.eval(context)
+		context.scope.set(varname, expr.eval(context))
 	}
 }

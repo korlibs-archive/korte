@@ -12,14 +12,14 @@ data class BlockFor(val varnames: List<String>, val expr: ExprNode, val loop: Bl
 			var index = 0
 			val items = Dynamic.toIterable(expr.eval(context)).toList()
 			val loopValue = hashMapOf<String, Any?>()
-			context.scope["loop"] = loopValue
+			context.scope.set("loop", loopValue)
 			loopValue["length"] = items.size
 			for (v in items) {
 				if (v is Pair<*, *> && varnames.size >= 2) {
-					context.scope[varnames[0]] = v.first
-					context.scope[varnames[1]] = v.second
+					context.scope.set(varnames[0], v.first)
+					context.scope.set(varnames[1], v.second)
 				} else {
-					context.scope[varnames[0]] = v
+					context.scope.set(varnames[0], v)
 				}
 				loopValue["index"] = index + 1
 				loopValue["index0"] = index

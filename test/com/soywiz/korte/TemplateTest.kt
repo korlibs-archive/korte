@@ -2,10 +2,7 @@
 
 package com.soywiz.korte
 
-import com.soywiz.korio.async.EventLoop
-import com.soywiz.korio.async.EventLoopTest
-import com.soywiz.korio.async.asyncFun
-import com.soywiz.korio.async.sync
+import com.soywiz.korio.async.*
 import com.soywiz.korio.util.asyncCaptureStdout
 import org.junit.Assert
 import org.junit.Test
@@ -173,6 +170,17 @@ class TemplateTest {
 				""".trimIndent()
 			)()
 		)
+	}
+
+	@Test fun testSuspendClass() = sync {
+		class Test {
+			suspend fun a(): Int = asyncFun {
+				val r = executeInWorker { 1 }
+				r + 7
+			}
+		}
+
+		Assert.assertEquals("""8""", Template("{{ v.a }}")("v" to Test()))
 	}
 
 	//@Test fun testStringInterpolation() = sync {
