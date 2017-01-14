@@ -2,7 +2,18 @@ apply from: "../include.gradle"
 
 apply plugin: 'kotlin'
 
+apply plugin: 'application'
+apply plugin: 'jtransc'
+
+mainClassName = "com.soywiz.korte.jekyll.KorteJekyll"
+
 dependencies {
     compile "com.soywiz:korio:$korioVersion"
     //compile "io.vertx:vertx-core:$vertxVersion"
+}
+
+jtransc {
+    minimizeNames = false
+    treeshaking = true
+    //treeshaking = false
 }

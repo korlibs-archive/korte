@@ -5,6 +5,7 @@ import com.soywiz.korio.util.Dynamic
 import com.soywiz.korte.Block
 import com.soywiz.korte.ExprNode
 import com.soywiz.korte.Template
+import com.soywiz.korte.toDynamicList
 
 data class BlockFor(val varnames: List<String>, val expr: ExprNode, val loop: Block, val elseNode: Block?) : Block {
 	override suspend fun eval(context: Template.EvalContext) = asyncFun<Unit> {

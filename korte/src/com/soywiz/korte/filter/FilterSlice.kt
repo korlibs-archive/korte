@@ -2,7 +2,7 @@ package com.soywiz.korte.filter
 
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.clamp
-import com.soywiz.korte.Filter
+import com.soywiz.korte.*
 
 val FilterSlice = Filter("slice") { subject, args ->
 	val lengthArg = args.getOrNull(1)

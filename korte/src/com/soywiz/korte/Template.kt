@@ -1,3 +1,5 @@
+@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
+
 package com.soywiz.korte
 
 import com.soywiz.korio.async.asyncFun
@@ -150,5 +152,5 @@ class Template internal constructor(
 }
 
 suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template = asyncFun {
-	Templates(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config).get("template")
+	Templates(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config = config).get("template")
 }

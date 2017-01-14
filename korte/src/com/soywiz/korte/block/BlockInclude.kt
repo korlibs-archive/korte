@@ -5,10 +5,11 @@ import com.soywiz.korio.util.Dynamic
 import com.soywiz.korte.Block
 import com.soywiz.korte.ExprNode
 import com.soywiz.korte.Template
+import com.soywiz.korte.toDynamicString
 
 data class BlockInclude(val fileNameExpr: ExprNode) : Block, Dynamic.Context {
 	override suspend fun eval(context: Template.EvalContext) = asyncFun<Unit> {
 		val fileName = fileNameExpr.eval(context).toDynamicString()
-		context.templates.get(fileName).eval(context)
+		context.templates.getInclude(fileName).eval(context)
 	}
 }
