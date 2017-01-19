@@ -2,7 +2,10 @@
 
 package com.soywiz.korte
 
-import com.soywiz.korio.async.*
+import com.soywiz.korio.async.EventLoop
+import com.soywiz.korio.async.EventLoopTest
+import com.soywiz.korio.async.executeInWorker
+import com.soywiz.korio.async.sync
 import com.soywiz.korio.util.asyncCaptureStdout
 import org.junit.Assert
 import org.junit.Test
@@ -125,7 +128,7 @@ class TemplateTest {
 
 	@Test fun testCustomTag() = sync {
 		class CustomNode(val text: String) : Block {
-			override suspend fun eval(context: Template.EvalContext) = asyncFun { context.write("CUSTOM($text)") }
+			override suspend fun eval(context: Template.EvalContext) = context.write("CUSTOM($text)")
 		}
 
 		val CustomTag = Tag("custom", setOf(), null) {
@@ -174,9 +177,9 @@ class TemplateTest {
 
 	@Test fun testSuspendClass() = sync {
 		class Test {
-			suspend fun a(): Int = asyncFun {
+			suspend fun a(): Int {
 				val r = executeInWorker { 1 }
-				r + 7
+				return r + 7
 			}
 		}
 

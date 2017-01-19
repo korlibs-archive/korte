@@ -4,7 +4,6 @@ package com.soywiz.korte.jekyll
 
 import com.soywiz.korio.async.EventLoop
 import com.soywiz.korio.async.WorkQueue
-import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.vfs.LocalVfs
 
 object KorteJekyll {
@@ -13,7 +12,7 @@ object KorteJekyll {
 	val inp = base["input"]
 	val out = base["output"]
 
-	suspend fun rebuild() = asyncFun {
+	suspend fun rebuild() {
 		println("rebuild!")
 		//for (f in inp.list()) println(f)
 

@@ -2,7 +2,6 @@
 
 package com.soywiz.korte
 
-import com.soywiz.korio.async.asyncFun
 import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.Extra
@@ -28,7 +27,7 @@ class Template internal constructor(
 	val templateTokens = Token.Companion.tokenize(template)
 	lateinit var rootNode: Block; private set
 
-	suspend fun init(): Template = asyncFun {
+	suspend fun init(): Template {
 		rootNode = Block.parse(templateTokens, parseContext)
 		// @TODO: Move to parse plugin + extra
 		if (frontMatter != null) {
@@ -40,7 +39,7 @@ class Template internal constructor(
 				))
 			}
 		}
-		this
+		return this
 	}
 
 	class ParseContext(val template: Template, val config: TemplateConfig) {
@@ -49,13 +48,15 @@ class Template internal constructor(
 
 	class Scope(val map: Any?, val parent: Template.Scope? = null) : Dynamic.Context {
 		// operator
-		suspend fun get(key: Any?): Any? = asyncFun { map.dynamicGet(key) ?: parent?.get(key) }
+		suspend fun get(key: Any?): Any? = map.dynamicGet(key) ?: parent?.get(key)
 
 		// operator
-		suspend fun set(key: Any?, value: Any?): Unit = asyncFun<Unit> { map.dynamicSet(key, value) }
+		suspend fun set(key: Any?, value: Any?): Unit {
+			map.dynamicSet(key, value)
+		}
 	}
 
-	suspend fun eval(context: Template.EvalContext) = asyncFun {
+	suspend fun eval(context: Template.EvalContext) {
 		val oldParentTemplate = context.parentTemplate
 		val oldCurrentTemplate = context.currentTemplate
 		try {
@@ -75,18 +76,16 @@ class Template internal constructor(
 	}
 
 
-	operator suspend fun invoke(args: Any?): String = asyncFun {
+	operator suspend fun invoke(args: Any?): String {
 		val str = StringBuilder()
 		val scope = Scope(args)
 		if (frontMatter != null) for ((k, v) in frontMatter!!) scope.set(k, v)
 		val context = Template.EvalContext(this, this, scope, config, write = { str.append(it) })
 		eval(context)
-		str.toString()
+		return str.toString()
 	}
 
-	operator suspend fun invoke(vararg args: Pair<String, Any?>): String {
-		return invoke(hashMapOf(*args))
-	}
+	operator suspend fun invoke(vararg args: Pair<String, Any?>): String = invoke(hashMapOf(*args))
 
 	class EvalContext(
 		val rootTemplate: Template,
@@ -151,6 +150,6 @@ class Template internal constructor(
 	}
 }
 
-suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template = asyncFun {
-	Templates(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config = config).get("template")
+suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template {
+	return Templates(MemoryVfs(mapOf("template" to template.toByteArray().openAsync())), config = config).get("template")
 }
