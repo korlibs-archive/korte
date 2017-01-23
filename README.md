@@ -11,6 +11,14 @@ Also you will be able migrate websites using twig to kotlin easier.
 That jekyll-like will be able to compile into a single nodejs javascript/or native executable using [jtransc](https://github.com/jtransc/jtransc) and/or kotlin.js
 so no more ruby installing issues or file watching issues on windows.
 
+## Live demo
+
+Online interactive real-time live demo using [Korte](https://github.com/soywiz/korte) + [Korui](https://github.com/soywiz/korui) compiled to JavaScript using [JTransc](https://github.com/jtransc/jtransc):
+
+[https://soywiz.github.io/kor_samples/korte1/](https://soywiz.github.io/kor_samples/korte1/)
+
+[![](docs/korte_sample.png)](https://soywiz.github.io/kor_samples/korte1/)
+
 ## Supported stuff
 
 ### Jekyll FrontMatter + layout + {{ content }}
