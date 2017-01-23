@@ -1,6 +1,5 @@
 package com.soywiz.korte.filter
 
-import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.clamp
 import com.soywiz.korte.*
 

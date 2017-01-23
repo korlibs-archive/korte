@@ -1,6 +1,7 @@
 package com.soywiz.korte.block
 
 import com.soywiz.korte.Block
+import com.soywiz.korte.RawString
 import com.soywiz.korte.Template
 
 data class BlockCapture(val varname: String, val content: Block) : Block {
@@ -8,6 +9,6 @@ data class BlockCapture(val varname: String, val content: Block) : Block {
 		val result = context.capture {
 			content.eval(context)
 		}
-		context.scope.set(varname, result)
+		context.scope.set(varname, RawString(result))
 	}
 }

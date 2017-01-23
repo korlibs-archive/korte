@@ -64,13 +64,21 @@ interface ExprNode : Dynamic.Context {
 
 	data class BINOP(val l: ExprNode, val r: ExprNode, val op: String) : ExprNode {
 		override suspend fun eval(context: Template.EvalContext): Any? {
-			return Dynamic.binop(l.eval(context), r.eval(context), op)
+			val lr = l.eval(context)
+			val rr = r.eval(context)
+			return when (op) {
+				"~" -> lr.toDynamicString() + rr.toDynamicString()
+				else -> Dynamic.binop(lr, rr, op)
+			}
 		}
 	}
 
 	data class UNOP(val r: ExprNode, val op: String) : ExprNode {
 		override suspend fun eval(context: Template.EvalContext): Any? {
-			return Dynamic.unop(r.eval(context), op)
+			return when (op) {
+				"", "+" -> r.eval(context)
+				else -> Dynamic.unop(r.eval(context), op)
+			}
 		}
 	}
 
@@ -97,11 +105,20 @@ interface ExprNode : Dynamic.Context {
 			return result
 		}
 
-		private val BINOPS = setOf(
-			"+", "-", "*", "/", "%",
-			"==", "!=", "<", ">", "<=", ">=", "<=>",
-			"&&", "||", "in"
+		private val BINOPS_PRIORITIES_LIST = listOf(
+			listOf("*", "/", "%"),
+			listOf("+", "-", "~"),
+			listOf("==", "!=", "<", ">", "<=", ">=", "<=>"),
+			listOf("&&"),
+			listOf("||"),
+			listOf("in")
 		)
+
+		private val BINOPS = BINOPS_PRIORITIES_LIST.withIndex()
+			.flatMap { (index, ops) -> ops.map { it to index } }
+			.toMap()
+
+		fun binopPr(str: String) = BINOPS[str] ?: 0
 
 		fun parseExpr(r: ListReader<Token>): ExprNode {
 			var result = ExprNode.parseFinal(r)
@@ -110,9 +127,21 @@ interface ExprNode : Dynamic.Context {
 				if (r.peek().text !in ExprNode.BINOPS) break
 				val operator = r.read().text
 				val right = ExprNode.parseFinal(r)
+				if (result is BINOP) {
+					val a = result.l
+					val lop = result.op
+					val b = result.r
+					val rop = operator
+					val c = right
+					val lopPr = binopPr(lop)
+					val ropPr = binopPr(rop)
+					if (lopPr > ropPr) {
+						result = BINOP(a, BINOP(b, c, rop), lop)
+						continue
+					}
+				}
 				result = BINOP(result, right, operator)
 			}
-			// @TODO: Fix order!
 			return result
 		}
 
@@ -126,7 +155,7 @@ interface ExprNode : Dynamic.Context {
 					r.read()
 					val result = ExprNode.parseExpr(r)
 					if (r.read().text != ")") throw RuntimeException("Expected ')'")
-					result
+					UNOP(result, "")
 				}
 			// Array literal
 				"[" -> {
@@ -196,7 +225,8 @@ interface ExprNode : Dynamic.Context {
 						r.read()
 						val name = r.read().text
 						val args = arrayListOf<ExprNode>()
-						if (r.peek().text == "(") {
+						if (name.isEmpty()) invalidOp("Missing filter name")
+						if (r.hasMore && r.peek().text == "(") {
 							r.read()
 							callargsloop@ while (r.hasMore && r.peek().text != ")") {
 								args += ExprNode.parseExpr(r)

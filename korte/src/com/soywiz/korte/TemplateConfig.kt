@@ -6,12 +6,13 @@ import com.soywiz.korte.tag.*
 class TemplateConfig(
 	extraTags: List<Tag> = listOf(),
 	extraFilters: List<Filter> = listOf()
-    //parsePlugin: List<ParsePlugin>
+	//parsePlugin: List<ParsePlugin>
 ) {
 	val integratedFilters = listOf(
 		FilterLength, FilterCapitalize, FilterUpper,
 		FilterLower, FilterTrim, FilterQuote, FilterJoin,
-		FilterSlice, FilterReverse
+		FilterSort,
+		FilterSlice, FilterReverse, FilterRaw
 	)
 
 	val integratedTags = listOf(

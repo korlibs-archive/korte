@@ -2,15 +2,12 @@
 
 package com.soywiz.korte
 
-import com.soywiz.korio.async.EventLoop
-import com.soywiz.korio.async.EventLoopTest
-import com.soywiz.korio.async.executeInWorker
-import com.soywiz.korio.async.sync
+import com.soywiz.korio.async.*
 import com.soywiz.korio.util.asyncCaptureStdout
 import org.junit.Assert
 import org.junit.Test
 
-class TemplateTest {
+class TemplateTest : BaseTest() {
 	val el = EventLoopTest().apply { EventLoop.impl = this }
 
 	@Test fun testDummy() = sync {
@@ -158,7 +155,43 @@ class TemplateTest {
 	}
 
 	@Test fun testObject() = sync {
-		Assert.assertEquals("""{"foo": 1, "bar": 2}""", Template("{{ { 'foo': 1, 'bar': 2 } }}")())
+		Assert.assertEquals("""{&quot;foo&quot;: 1, &quot;bar&quot;: 2}""", Template("{{ { 'foo': 1, 'bar': 2 } }}")())
+	}
+
+	@Test fun testEscape() = sync {
+		Assert.assertEquals("<b>&lt;a&gt;</b>", Template("<b>{{ a }}</b>")("a" to "<a>"))
+		Assert.assertEquals("<b><a></b>", Template("<b>{{ a|raw }}</b>")("a" to "<a>"))
+		Assert.assertEquals("<b>&lt;A&gt;</b>", Template("<b>{{ a|raw|upper }}</b>")("a" to "<a>"))
+		Assert.assertEquals("<b><A></b>", Template("<b>{{ a|upper|raw }}</b>")("a" to "<a>"))
+	}
+
+	@Test fun testTrim() = sync {
+		Assert.assertEquals("""a  1  b""", Template("a  {{ 1 }}  b")())
+		Assert.assertEquals("""a1  b""", Template("a  {{- 1 }}  b")())
+		Assert.assertEquals("""a  1b""", Template("a  {{ 1 -}}  b")())
+		Assert.assertEquals("""a1b""", Template("a  {{- 1 -}}  b")())
+
+		Assert.assertEquals("""a     b""", Template("a  {% set a=1 %}   b")())
+		Assert.assertEquals("""a   b""", Template("a  {%- set a=1 %}   b")())
+		Assert.assertEquals("""a  b""", Template("a  {% set a=1 -%}   b")())
+		Assert.assertEquals("""ab""", Template("a  {%- set a=1 -%}   b")())
+	}
+
+	@Test fun testOperatorPrecedence() = sync {
+		Assert.assertEquals("${4 + 5 * 7}", Template("{{ 4+5*7 }}")())
+		Assert.assertEquals("${4 * 5 + 7}", Template("{{ 4*5+7 }}")())
+	}
+
+	@Test fun testOperatorPrecedence2() = sync {
+		Assert.assertEquals("${(4 + 5) * 7}", Template("{{ (4+5)*7 }}")())
+		Assert.assertEquals("${(4 * 5) + 7}", Template("{{ (4*5)+7 }}")())
+		Assert.assertEquals("${4 + (5 * 7)}", Template("{{ 4+(5*7) }}")())
+		Assert.assertEquals("${4 * (5 + 7)}", Template("{{ 4*(5+7) }}")())
+	}
+
+	@Test fun testOperatorPrecedence3() = sync {
+		Assert.assertEquals("${ -(4 + 5) }", Template("{{ -(4+5) }}")())
+		Assert.assertEquals("${ +(4 + 5) }", Template("{{ +(4+5) }}")())
 	}
 
 	@Test fun testFrontMatter() = sync {
@@ -189,6 +222,18 @@ class TemplateTest {
 	//@Test fun testStringInterpolation() = sync {
 	//	Assert.assertEquals("a2b", Template("{{ \"a#{7 - 5}b\" }}")())
 	//}
+
+	@Test fun testConcatOperator() = sync {
+		Assert.assertEquals("12", Template("{{ 1 ~ 2 }}")())
+	}
+
+	@Test fun testUnknownFilter() = sync {
+		expectException("Unknown filter 'unknownFilter'") { Template("{{ 'a'|unknownFilter }}")() }
+	}
+
+	@Test fun testMissingFilterName() = sync {
+		expectException("Missing filter name") { Template("{{ 'a'| }}")() }
+	}
 
 	data class Person(val name: String, val surname: String)
 }

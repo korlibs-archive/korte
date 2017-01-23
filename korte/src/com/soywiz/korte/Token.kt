@@ -1,9 +1,12 @@
 package com.soywiz.korte
 
-interface Token {
-	data class TLiteral(val content: String) : Token
-	data class TExpr(val content: String) : Token
-	data class TTag(val name: String, val content: String) : Token {
+sealed class Token {
+	var trimLeft = false
+	var trimRight = false
+
+	data class TLiteral(val content: String) : Token()
+	data class TExpr(val content: String) : Token()
+	data class TTag(val name: String, val content: String) : Token() {
 		val tokens by lazy { ExprNode.Token.tokenize(content) }
 	}
 
@@ -20,6 +23,7 @@ interface Token {
 			var pos = 0
 			while (pos < str.length) {
 				val c = str[pos++]
+				// {% {{ }} %}
 				if (c == '{') {
 					if (pos >= str.length) break
 					val c2 = str[pos++]
@@ -27,26 +31,52 @@ interface Token {
 						val startPos = pos - 2
 						val pos2 = if (c2 == '{') str.indexOf("}}", pos) else str.indexOf("%}", pos)
 						if (pos2 < 0) break
-						val content = str.substring(pos, pos2).trim()
+						val trimLeft = str[pos] == '-'
+						val trimRight = str[pos2 - 1] == '-'
+
+						val p1 = if (trimLeft) pos + 1 else pos
+						val p2 = if (trimRight) pos2 - 1 else pos2
+
+						val content = str.substring(p1, p2).trim()
 
 						if (lastPos != startPos) {
 							emit(TLiteral(str.substring(lastPos until startPos)))
 						}
 
-						if (c2 == '{') {
+						val token = if (c2 == '{') {
 							//println("expr: '$content'")
-							emit(TExpr(content))
+							TExpr(content)
 						} else {
 							val parts = content.split(' ', limit = 2)
 							//println("tag: '$content'")
-							emit(TTag(parts[0], parts.getOrElse(1) { "" }))
+							TTag(parts[0], parts.getOrElse(1) { "" })
 						}
+						token.trimLeft = trimLeft
+						token.trimRight = trimRight
+						emit(token)
 						pos = pos2 + 2
 						lastPos = pos
 					}
 				}
 			}
 			emit(TLiteral(str.substring(lastPos, str.length)))
+
+			for ((n, cur) in out.withIndex()) {
+				if (cur is Token.TLiteral) {
+					val trimStart = out.getOrNull(n - 1)?.trimRight ?: false
+					val trimEnd = out.getOrNull(n + 1)?.trimLeft ?: false
+					out[n] = if (trimStart && trimEnd) {
+						TLiteral(cur.content.trim())
+					} else if (trimStart) {
+						TLiteral(cur.content.trimStart())
+					} else if (trimEnd) {
+						TLiteral(cur.content.trimEnd())
+					} else {
+						cur
+					}
+				}
+			}
+
 			return out
 		}
 	}
