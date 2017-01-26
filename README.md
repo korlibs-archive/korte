@@ -1,5 +1,9 @@
 # Kotlin cORoutines Template Engine
 
+![](https://raw.githubusercontent.com/soywiz/kor/master/logos/128/korte.png)
+
+[All KOR libraries](https://github.com/soywiz/kor)
+
 Port of my template engine based on twig/django [atpl.js](https://github.com/soywiz/atpl.js) + goodies.
 
 Allow **suspension points** on read properties and method calling. Uses korio and virtual filesystems.
