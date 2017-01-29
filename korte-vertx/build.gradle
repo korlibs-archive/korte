@@ -4,7 +4,7 @@ apply plugin: 'kotlin'
 
 dependencies {
     compile project(":korte")
-    compile "com.soywiz:korio-vertx:$korioVersion"
+    compile "com.soywiz:korio-vertx:$korVersion"
     compile "io.vertx:vertx-core:$vertxVersion"
     compile "io.vertx:vertx-web:$vertxVersion"
 }
