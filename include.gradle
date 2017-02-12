@@ -21,6 +21,10 @@ apply plugin: 'signing'
 apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.bintray'
 
+kotlin {
+    experimental { coroutines 'enable' }
+}
+
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
