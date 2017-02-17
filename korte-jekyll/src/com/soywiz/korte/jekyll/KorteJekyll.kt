@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
-
 package com.soywiz.korte.jekyll
 
 import com.soywiz.korio.async.EventLoop

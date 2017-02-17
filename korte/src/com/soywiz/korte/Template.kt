@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
-
 package com.soywiz.korte
 
 import com.soywiz.korio.stream.openAsync

@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_FEATURE_WARNING")
-
 package com.soywiz.korte
 
 import com.soywiz.korio.util.AsyncCache
@@ -23,7 +21,8 @@ class Templates(
 		Template(this@Templates, content, config).init()
 	}
 
-	suspend operator fun get(name: String): Template = cache(name) {
+	//suspend operator fun get(name: String): Template = cache(name) { // @TODO: Unsupported operator. Re-enable when this limitation is lifted.
+	suspend fun get(name: String): Template = cache(name) {
 		val content = root[name].readString()
 		Template(this@Templates, content, config).init()
 	}
