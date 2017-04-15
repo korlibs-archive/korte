@@ -1,5 +1,3 @@
-apply from: "../include.gradle"
-
 apply plugin: 'kotlin'
 
 dependencies {
@@ -7,4 +5,14 @@ dependencies {
     compile "com.soywiz:korio-vertx:$korVersion"
     compile "io.vertx:vertx-core:$vertxVersion"
     compile "io.vertx:vertx-web:$vertxVersion"
+}
+
+configurations {
+    provided
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    mavenCentral()
 }
