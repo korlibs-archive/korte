@@ -3,15 +3,14 @@ package com.soywiz.korte
 import com.soywiz.korio.async.EventLoop
 import com.soywiz.korio.async.EventLoopTest
 import com.soywiz.korio.async.sync
+import com.soywiz.korio.async.syncTest
 import com.soywiz.korio.vfs.MemoryVfsMix
 import org.junit.Assert
 import org.junit.Test
 
 class TemplateInheritanceTest {
-	val el = EventLoopTest().apply { EventLoop.impl = this }
-
 	@Test
-	fun simple() = sync {
+	fun simple() = syncTest {
 		Assert.assertEquals(
 			"hello",
 			Templates(MemoryVfsMix(
@@ -21,7 +20,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun block() = sync {
+	fun block() = syncTest {
 		Assert.assertEquals(
 			"hello",
 			Templates(MemoryVfsMix(
@@ -31,7 +30,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun extends() = sync {
+	fun extends() = syncTest {
 		Assert.assertEquals(
 			"b",
 			Templates(MemoryVfsMix(
@@ -42,7 +41,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun doubleExtends() = sync {
+	fun doubleExtends() = syncTest {
 		Assert.assertEquals(
 			"c",
 			Templates(MemoryVfsMix(
@@ -54,7 +53,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun doubleExtends2() = sync {
+	fun doubleExtends2() = syncTest {
 		Assert.assertEquals(
 			"abcc",
 			Templates(MemoryVfsMix(
@@ -66,7 +65,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun include() = sync {
+	fun include() = syncTest {
 		Assert.assertEquals(
 			"Hello World, Carlos.",
 			Templates(MemoryVfsMix(
@@ -78,7 +77,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun jekyllLayout() = sync {
+	fun jekyllLayout() = syncTest {
 		Assert.assertEquals(
 			"Hello Carlos.",
 			Templates(MemoryVfsMix(
@@ -95,7 +94,7 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
-	fun jekyllLayoutEx() = sync {
+	fun jekyllLayoutEx() = syncTest {
 		Assert.assertEquals(
 			"<html><div>side</div><div><h1>Content</h1></div></html>",
 			Templates(MemoryVfsMix(
@@ -127,7 +126,7 @@ class TemplateInheritanceTest {
 	//}
 
 	@Test
-	fun operatorPrecedence() = sync {
+	fun operatorPrecedence() = syncTest {
 		Assert.assertEquals("true", Template("{{ 1 in [1, 2] }}")())
 		Assert.assertEquals("false", Template("{{ 3 in [1, 2] }}")())
 	}
