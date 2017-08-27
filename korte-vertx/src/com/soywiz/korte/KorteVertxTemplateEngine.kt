@@ -10,7 +10,17 @@ import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.templ.TemplateEngine
 
 class KorteVertxTemplateEngine(val coroutineContext: CoroutineContext, val templates: Templates) : TemplateEngine {
-	override fun render(context: RoutingContext, templateFileName: String, handler: Handler<AsyncResult<Buffer>>): Unit {
+	override fun render(context: RoutingContext, templateDirectory: String, templateFileName: String, handler: Handler<AsyncResult<Buffer>>) {
+		spawnAndForget(coroutineContext) {
+			val result = vxResult {
+				val str = templates.get(templateFileName).invoke()
+				Buffer.buffer(str)
+			}
+			handler.handle(result)
+		}
+	}
+
+	override fun render(context: RoutingContext, templateFileName: String, handler: Handler<AsyncResult<Buffer>>) {
 		spawnAndForget(coroutineContext) {
 			val result = vxResult {
 				val str = templates.get(templateFileName).invoke()
