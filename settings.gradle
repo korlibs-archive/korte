@@ -2,6 +2,8 @@ rootProject.name = 'korte-root'
 
 include(
         'korte',
+        'korte-web',
+        'korte-web-example',
         'korte-jekyll',
         'korte-vertx',
 )

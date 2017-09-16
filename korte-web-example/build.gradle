@@ -1,0 +1,28 @@
+apply plugin: 'kotlin'
+
+apply plugin: 'application'
+apply plugin: 'jtransc'
+
+
+dependencies {
+    compile project(":korte-web")
+    compile project(":korte-vertx")
+    compile "com.soywiz:korio-ext-web:$korVersion"
+    //compile "io.vertx:vertx-core:$vertxVersion"
+}
+
+configurations {
+    provided
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    mavenCentral()
+}
+
+jtransc {
+    minimizeNames = false
+    treeshaking = true
+    //treeshaking = false
+}
