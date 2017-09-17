@@ -26,4 +26,12 @@ class Templates(
 		val content = root[name].readString()
 		Template(this@Templates, content, config).init()
 	}
+
+	suspend fun render(name: String, vararg args: Pair<String, Any?>): String {
+		return get(name).invoke(*args)
+	}
+
+	suspend fun render(name: String, args: Map<String, Any?>): String {
+		return get(name).invoke(HashMap(args))
+	}
 }
