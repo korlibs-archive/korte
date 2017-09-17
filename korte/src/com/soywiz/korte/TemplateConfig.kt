@@ -1,7 +1,7 @@
 package com.soywiz.korte
 
-import com.soywiz.korte.filter.*
-import com.soywiz.korte.tag.*
+import com.soywiz.korte.filter.DefaultFilters
+import com.soywiz.korte.tag.DefaultTags
 
 class TemplateConfig(
 	extraTags: List<Tag> = listOf(),
@@ -9,13 +9,7 @@ class TemplateConfig(
 	//parsePlugin: List<ParsePlugin>
 ) {
 	val integratedFilters = DefaultFilters.ALL
-
-	val integratedTags = listOf(
-		TagEmpty, TagIf, TagFor, SetTag, CaptureTag,
-		TagDebug,
-		TagBlock, TagExtends, TagInclude,
-		TagImport, TagMacro
-	)
+	val integratedTags = DefaultTags.ALL
 
 	private val allTags = integratedTags + extraTags
 	private val allFilters = integratedFilters + extraFilters

@@ -8,7 +8,7 @@ import com.soywiz.korio.util.ListReader
 import com.soywiz.korte.block.BlockExpr
 import com.soywiz.korte.block.BlockGroup
 import com.soywiz.korte.block.BlockText
-import com.soywiz.korte.tag.TagEmpty
+import com.soywiz.korte.tag.DefaultTags
 
 interface Block : Dynamic.Context {
 	suspend fun eval(context: Template.EvalContext): Unit
@@ -82,7 +82,7 @@ interface Block : Dynamic.Context {
 		}
 
 		suspend fun parse(tokens: List<Token>, parseContext: Template.ParseContext): Block {
-			return Parse(tokens, parseContext).handle(TagEmpty, Token.TTag("", ""))
+			return Parse(tokens, parseContext).handle(DefaultTags.Empty, Token.TTag("", ""))
 		}
 	}
 }
