@@ -85,6 +85,16 @@ interface ExprNode : Dynamic.Context {
 		}
 	}
 
+	data class TERNARY(val cond: ExprNode, val etrue: ExprNode, val efalse: ExprNode) : ExprNode {
+		override suspend fun eval(context: Template.EvalContext): Any? {
+			return if (cond.eval(context).toDynamicBool()) {
+				etrue.eval(context)
+			} else {
+				efalse.eval(context)
+			}
+		}
+	}
+
 	data class UNOP(val r: ExprNode, val op: String) : ExprNode {
 		override suspend fun eval(context: Template.EvalContext): Any? {
 			return when (op) {
@@ -158,7 +168,19 @@ interface ExprNode : Dynamic.Context {
 			return result
 		}
 
-		fun parseExpr(r: ListReader<Token>): ExprNode = parseBinExpr(r)
+		fun parseTernaryExpr(r: ListReader<Token>): ExprNode {
+			var left = this.parseBinExpr(r)
+			if (r.peek().text == "?") {
+				r.skip();
+				var middle = parseExpr(r)
+				r.expect(":")
+				var right = parseExpr(r)
+				left = TERNARY(left, middle, right);
+			}
+			return left;
+		}
+
+		fun parseExpr(r: ListReader<Token>): ExprNode = parseTernaryExpr(r)
 
 		private fun parseFinal(r: ListReader<Token>): ExprNode {
 			var construct: ExprNode = when (r.peek().text) {

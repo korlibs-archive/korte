@@ -111,10 +111,10 @@ class TemplateTest : BaseTest() {
 		Assert.assertEquals("2", Template("{{ 0 ?: 2 }}")(null))
 	}
 
-	//@Test fun testTernary() = syncTest {
-	//	Assert.assertEquals("2", Template("{{ 1 ? 2 : 3 }}")(null))
-	//	Assert.assertEquals("3", Template("{{ 0 ? 2 : 3 }}")(null))
-	//}
+	@Test fun testTernary() = syncTest {
+		Assert.assertEquals("2", Template("{{ 1 ? 2 : 3 }}")(null))
+		Assert.assertEquals("3", Template("{{ 0 ? 2 : 3 }}")(null))
+	}
 
 	@Test fun testSet() = syncTest {
 		Assert.assertEquals("1,2,3", Template("{% set a = [1,2,3] %}{{ a|join(',') }}")(null))
