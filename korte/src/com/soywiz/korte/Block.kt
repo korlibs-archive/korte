@@ -7,7 +7,7 @@ import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.ListReader
 
 interface Block : Dynamic.Context {
-	suspend fun eval(context: Template.EvalContext): Unit
+	suspend fun eval(context: Template.EvalContext)
 
 	companion object {
 		fun group(children: List<Block>): Block = if (children.size == 1) children[0] else DefaultBlocks.BlockGroup(children)

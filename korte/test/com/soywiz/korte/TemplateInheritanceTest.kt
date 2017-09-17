@@ -53,6 +53,18 @@ class TemplateInheritanceTest {
 	}
 
 	@Test
+	fun blockParent() = syncTest {
+		Assert.assertEquals(
+			"abc",
+			Templates(MemoryVfsMix(
+				"a" to """{% block test %}a{% end %}""",
+				"b" to """{% extends "a" %}{% block test %}{{ parent() }}b{% end %}""",
+				"c" to """{% extends "b" %}{% block test %}{{ parent() }}c{% end %}"""
+			)).get("c")()
+		)
+	}
+
+	@Test
 	fun doubleExtends2() = syncTest {
 		Assert.assertEquals(
 			"abcc",

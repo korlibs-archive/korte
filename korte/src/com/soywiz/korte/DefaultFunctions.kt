@@ -26,5 +26,25 @@ object DefaultFunctions {
 		}
 	}
 
+	@JvmStatic
+	val Parent = TeFunction("parent") { _, ctx ->
+		if (ctx.templateStack.isEmpty()) {
+			""
+		} else {
+			//ctx.tempDropTemplate {
+			ctx.tempDropFirstTemplate {
+				val current = ctx.currentTemplate
+				val blockName = ctx.currentBlockName
+				if (blockName != null) {
+					ctx.capture {
+						current.getBlock(ctx, blockName).eval(ctx)
+					}
+				} else {
+					""
+				}
+			}
+		}
+	}
+
 	val ALL by lazy { Dynamic.getStaticTypedFields<TeFunction>(javaClass) }
 }

@@ -111,6 +111,7 @@ class Template internal constructor(
 	) {
 		val macros = hashMapOf<String, Macro>()
 		val templates = rootTemplate.templates
+		var currentBlockName: String? = null
 
 		var parentTemplate: Template? = null
 
@@ -126,14 +127,17 @@ class Template internal constructor(
 			out
 		}
 
-		inline fun tempDropTemplate(callback: () -> Unit) = this.apply {
+		inline fun <T> tempDropLastTemplate(callback: () -> T): T = tempDropTemplate(first = false, callback = callback)
+		inline fun <T> tempDropFirstTemplate(callback: () -> T): T = tempDropTemplate(first = true, callback = callback)
+
+		inline fun <T> tempDropTemplate(first: Boolean, callback: () -> T): T {
 			val oldParentTemplate = parentTemplate
 			val oldCurrentTemplate = currentTemplate
-			val oldTemplateStack = this@EvalContext.templateStack.removeLast()
+			val oldTemplateStack = if (first) this@EvalContext.templateStack.removeFirst() else this@EvalContext.templateStack.removeLast()
 			try {
 				currentTemplate = oldTemplateStack
-				parentTemplate = templateStack.last
-				callback()
+				parentTemplate = if (first) templateStack.firstOrNull() else templateStack.lastOrNull()
+				return callback()
 			} finally {
 				templateStack.addLast(oldTemplateStack)
 				parentTemplate = oldParentTemplate

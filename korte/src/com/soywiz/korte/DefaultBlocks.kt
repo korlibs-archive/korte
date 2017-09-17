@@ -5,7 +5,13 @@ import com.soywiz.korio.util.Dynamic
 object DefaultBlocks {
 	data class BlockBlock(val name: String) : Block {
 		override suspend fun eval(context: Template.EvalContext) {
-			context.rootTemplate.getBlock(context, name).eval(context)
+			val oldBlockName = context.currentBlockName
+			try {
+				context.currentBlockName = name
+				context.rootTemplate.getBlock(context, name).eval(context)
+			} finally {
+				context.currentBlockName = oldBlockName
+			}
 		}
 	}
 
