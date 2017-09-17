@@ -31,7 +31,7 @@ interface ExprNode : Dynamic.Context {
 	data class FILTER(val name: String, val expr: ExprNode, val params: List<ExprNode>) : ExprNode {
 		override suspend fun eval(context: Template.EvalContext): Any? {
 			val filter = context.config.filters[name] ?: invalidOp("Unknown filter '$name'")
-			return filter.eval(this, expr.eval(context), params.map { it.eval(context) })
+			return filter.eval(this, expr.eval(context), params.map { it.eval(context) }, context)
 		}
 	}
 
@@ -53,7 +53,7 @@ interface ExprNode : Dynamic.Context {
 
 	data class CALL(val method: ExprNode, val args: List<ExprNode>) : ExprNode {
 		override suspend fun eval(context: Template.EvalContext): Any? {
-			val processedArgs = args.map { it.eval(context) }.toTypedArray()
+			val processedArgs = args.map { it.eval(context) }
 			when (method) {
 				is ExprNode.ACCESS -> {
 					val obj = method.expr.eval(context)
@@ -62,15 +62,19 @@ interface ExprNode : Dynamic.Context {
 					if (obj is Map<*, *>) {
 						val k = obj[methodName]
 						if (k is Template.DynamicInvokable) {
-							return k.invoke(context, processedArgs.toList())
+							return k.invoke(context, processedArgs)
 						}
 					}
-					return obj.dynamicCallMethod(methodName, *processedArgs)
+					return obj.dynamicCallMethod(methodName, processedArgs.toTypedArray())
 				}
-				else -> {
-					return method.eval(context).dynamicCall(*processedArgs)
+				is ExprNode.VAR -> {
+					val func = context.config.functions[method.name]
+					if (func != null) {
+						return func.eval(Dynamic.contextInstance, processedArgs, context)
+					}
 				}
 			}
+			return method.eval(context).dynamicCall(processedArgs.toTypedArray())
 		}
 	}
 

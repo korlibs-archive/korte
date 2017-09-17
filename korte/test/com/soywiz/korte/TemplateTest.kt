@@ -186,6 +186,11 @@ class TemplateTest : BaseTest() {
 		Assert.assertEquals("""{&quot;foo&quot;: 1, &quot;bar&quot;: 2}""", Template("{{ { 'foo': 1, 'bar': 2 } }}")())
 	}
 
+	@Test fun testFuncCycle() = syncTest {
+		Assert.assertEquals("a", Template("{{ cycle(['a', 'b'], 2) }}")())
+		Assert.assertEquals("b", Template("{{ cycle(['a', 'b'], -1) }}")())
+	}
+
 	@Test fun testEscape() = syncTest {
 		Assert.assertEquals("<b>&lt;a&gt;</b>", Template("<b>{{ a }}</b>")("a" to "<a>"))
 		Assert.assertEquals("<b><a></b>", Template("<b>{{ a|raw }}</b>")("a" to "<a>"))
