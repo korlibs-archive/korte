@@ -8,12 +8,7 @@ class TemplateConfig(
 	extraFilters: List<Filter> = listOf()
 	//parsePlugin: List<ParsePlugin>
 ) {
-	val integratedFilters = listOf(
-		FilterLength, FilterCapitalize, FilterUpper,
-		FilterLower, FilterTrim, FilterQuote, FilterJoin,
-		FilterSort,
-		FilterSlice, FilterReverse, FilterRaw
-	)
+	val integratedFilters = DefaultFilters.ALL
 
 	val integratedTags = listOf(
 		TagEmpty, TagIf, TagFor, SetTag, CaptureTag,
