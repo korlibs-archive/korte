@@ -41,6 +41,9 @@ object DefaultFilters {
 	@JvmField val JsonEncode = Filter("json_encode") { subject, _ ->
 		Json.encode(subject)
 	}
+	@JvmField val Format = Filter("format") { subject, args ->
+		subject.toString().format(*args.toTypedArray())
+	}
 
 	val ALL by lazy {
 		val list = arrayListOf<Filter>()

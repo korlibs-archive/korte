@@ -235,7 +235,12 @@ interface ExprNode : Dynamic.Context {
 				else -> {
 					// Number
 					if (r.peek() is ExprNode.Token.TNumber) {
-						LIT(r.read().text.toDouble())
+						val ntext = r.read().text
+						when (ntext.toDouble()) {
+							ntext.toInt().toDouble() -> LIT(ntext.toIntOrNull() ?: 0)
+							ntext.toLong().toDouble() -> LIT(ntext.toLongOrNull() ?: 0L)
+							else -> LIT(ntext.toDoubleOrNull() ?: 0.0)
+						}
 					}
 					// String
 					else if (r.peek() is ExprNode.Token.TString) {
