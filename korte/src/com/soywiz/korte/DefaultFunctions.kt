@@ -33,10 +33,7 @@ object DefaultFunctions {
 
 		if (blockName != null) {
 			ctx.captureRaw {
-				val cb = ctx.currentBlock
-				val pb = ctx.currentBlock?.parent
-				println("cb=$cb, pb=$pb")
-				pb?.eval(ctx)
+				ctx.currentBlock?.parent?.eval(ctx)
 			}
 		} else {
 			""
