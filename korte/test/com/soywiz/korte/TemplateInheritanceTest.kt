@@ -15,7 +15,7 @@ class TemplateInheritanceTest {
 			"hello",
 			Templates(MemoryVfsMix(
 				"a" to "hello"
-			)).get("a")()
+			)).get("a").invoke()
 		)
 	}
 
@@ -31,12 +31,13 @@ class TemplateInheritanceTest {
 
 	@Test
 	fun extends() = syncTest {
+		val template = Templates(MemoryVfsMix(
+			"a" to """{% block test %}a{% end %}""",
+			"b" to """{% extends "a" %}{% block test %}b{% end %}"""
+		)).get("b")
 		Assert.assertEquals(
 			"b",
-			Templates(MemoryVfsMix(
-				"a" to """{% block test %}a{% end %}""",
-				"b" to """{% extends "a" %}{% block test %}b{% end %}"""
-			)).get("b")()
+			template()
 		)
 	}
 
@@ -55,12 +56,35 @@ class TemplateInheritanceTest {
 	@Test
 	fun blockParent() = syncTest {
 		Assert.assertEquals(
+			"<b><a>TEXT</a></b>",
+			Templates(MemoryVfsMix(
+				"a" to """{% block test %}<a>TEXT</a>{% end %}""",
+				"b" to """{% extends "a" %}{% block test %}<b>{{ parent() }}</b>{% end %}"""
+			)).get("b")()
+		)
+	}
+
+	@Test
+	fun blockDoubleParent() = syncTest {
+		Assert.assertEquals(
 			"<c><b><a>TEXT</a></b></c>",
 			Templates(MemoryVfsMix(
 				"a" to """{% block test %}<a>TEXT</a>{% end %}""",
 				"b" to """{% extends "a" %}{% block test %}<b>{{ parent() }}</b>{% end %}""",
 				"c" to """{% extends "b" %}{% block test %}<c>{{ parent() }}</c>{% end %}"""
 			)).get("c")()
+		)
+	}
+
+	@Test
+	fun nestedBlocks() = syncTest {
+		Assert.assertEquals(
+			"<root><left><L>left:LEFT</L></left><right><R>right:RIGHT</R></right></root>",
+			Templates(MemoryVfsMix(
+				"root" to """<root>{% block main %}test{% end %}</root>""",
+				"2column" to """{% extends "root" %}  {% block main %}<left>{% block left %}left{% end %}</left><right>{% block right %}right{% end %}</right>{% end %}  """,
+				"mypage" to """{% extends "2column" %}  {% block right %}<R>{{ parent() }}:RIGHT</R>{% end %}  {% block left %}<L>{{ parent() }}:LEFT</L>{% end %}  """
+			)).get("mypage")()
 		)
 	}
 

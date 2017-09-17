@@ -5,13 +5,15 @@ import com.soywiz.korio.util.Dynamic
 object DefaultBlocks {
 	data class BlockBlock(val name: String) : Block {
 		override suspend fun eval(context: Template.EvalContext) {
-			val oldBlockName = context.currentBlockName
-			try {
-				context.currentBlockName = name
-				context.rootTemplate.getBlock(context, name).eval(context)
-			} finally {
-				context.currentBlockName = oldBlockName
-			}
+			//val oldBlock = context.currentBlock
+			//try {
+			//	val block = context.leafTemplate.getBlock(name)
+			//	context.currentBlock = block
+			//	block.block.eval(context)
+			//} finally {
+			//	context.currentBlock = oldBlock
+			//}
+			context.leafTemplate.getBlock(name).eval(context)
 		}
 	}
 
@@ -39,9 +41,10 @@ object DefaultBlocks {
 	data class BlockExtends(val expr: ExprNode) : Block, Dynamic.Context {
 		override suspend fun eval(context: Template.EvalContext) {
 			val result = expr.eval(context)
-			val parentTemplate = context.rootTemplate.templates.getLayout(result.toDynamicString())
+			val parentTemplate = Template.TemplateEvalContext(context.templates.getLayout(result.toDynamicString()))
+			context.currentTemplate.parent = parentTemplate
 			parentTemplate.eval(context)
-			throw InterruptedException()
+			throw Template.StopEvaluatingException()
 			//context.template.parent
 		}
 	}
@@ -95,7 +98,7 @@ object DefaultBlocks {
 
 	data class BlockImport(val fileExpr: ExprNode, val exportName: String) : Block, Dynamic.Context {
 		override suspend fun eval(context: Template.EvalContext) {
-			val ctx = context.templates.getInclude(fileExpr.eval(context).toString()).exec().context
+			val ctx = Template.TemplateEvalContext(context.templates.getInclude(fileExpr.eval(context).toString())).exec().context
 			context.scope.set(exportName, ctx.macros)
 		}
 	}
@@ -103,7 +106,7 @@ object DefaultBlocks {
 	data class BlockInclude(val fileNameExpr: ExprNode) : Block, Dynamic.Context {
 		override suspend fun eval(context: Template.EvalContext) {
 			val fileName = fileNameExpr.eval(context).toDynamicString()
-			context.templates.getInclude(fileName).eval(context)
+			Template.TemplateEvalContext(context.templates.getInclude(fileName)).eval(context)
 		}
 	}
 

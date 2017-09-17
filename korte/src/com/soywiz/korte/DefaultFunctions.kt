@@ -28,22 +28,18 @@ object DefaultFunctions {
 
 	@JvmStatic
 	val Parent = TeFunction("parent") { _, ctx ->
-		if (ctx.templateStack.isEmpty()) {
-			""
-		} else {
-			//ctx.tempDropTemplate {
-			val out: Any? = ctx.tempDropFirstTemplate {
-				val current = ctx.currentTemplate
-				val blockName = ctx.currentBlockName
-				if (blockName != null) {
-					ctx.captureRaw {
-						current.getBlock(ctx, blockName).eval(ctx)
-					}
-				} else {
-					""
-				}
+		//ctx.tempDropTemplate {
+		val blockName = ctx.currentBlock?.name
+
+		if (blockName != null) {
+			ctx.captureRaw {
+				val cb = ctx.currentBlock
+				val pb = ctx.currentBlock?.parent
+				println("cb=$cb, pb=$pb")
+				pb?.eval(ctx)
 			}
-			out
+		} else {
+			""
 		}
 	}
 

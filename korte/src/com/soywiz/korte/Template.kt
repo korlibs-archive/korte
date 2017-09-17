@@ -4,10 +4,10 @@ import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.Extra
 import com.soywiz.korio.vfs.MemoryVfs
-import java.util.*
 import kotlin.collections.set
 
 class Template internal constructor(
+	val name: String,
 	val templates: Templates,
 	val template: String,
 	val config: TemplateConfig = TemplateConfig()
@@ -49,40 +49,7 @@ class Template internal constructor(
 		}
 	}
 
-	suspend fun eval(context: Template.EvalContext) {
-		val oldParentTemplate = context.parentTemplate
-		val oldCurrentTemplate = context.currentTemplate
-		try {
-			context.parentTemplate = context.templateStack.lastOrNull()
-			context.currentTemplate = this@Template
-			context.templateStack.addLast(this@Template)
-			try {
-				context.createScope { rootNode.eval(context) }
-			} finally {
-				context.templateStack.removeLast()
-			}
-		} catch (e: InterruptedException) {
-		} finally {
-			context.parentTemplate = oldParentTemplate
-			context.currentTemplate = oldCurrentTemplate
-		}
-	}
-
 	data class ExecResult(val context: Template.EvalContext, val str: String)
-
-	suspend fun exec(args: Any?): ExecResult {
-		val str = StringBuilder()
-		val scope = Scope(args)
-		if (frontMatter != null) for ((k, v) in frontMatter!!) scope.set(k, v)
-		val context = Template.EvalContext(this, this, scope, config, write = { str.append(it) })
-		eval(context)
-		return ExecResult(context, str.toString())
-	}
-
-	suspend fun exec(vararg args: Pair<String, Any?>): ExecResult = exec(hashMapOf(*args))
-
-	operator suspend fun invoke(args: Any?): String = exec(args).str
-	operator suspend fun invoke(vararg args: Pair<String, Any?>): String = exec(hashMapOf(*args)).str
 
 	interface DynamicInvokable {
 		suspend fun invoke(ctx: Template.EvalContext, args: List<Any?>): Any?
@@ -101,19 +68,79 @@ class Template internal constructor(
 		}
 	}
 
+	data class BlockInTemplateEval(val name: String, val block: Block, val template: TemplateEvalContext) {
+		val parent: BlockInTemplateEval?
+			get() {
+				return template.parent?.getBlockOrNull(name)
+			}
+
+		suspend fun eval(ctx: EvalContext) = ctx.setTempTemplate(template) {
+			val oldBlock = ctx.currentBlock
+			try {
+				ctx.currentBlock = this
+				return@setTempTemplate block.eval(ctx)
+			} finally {
+				ctx.currentBlock = oldBlock
+			}
+		}
+	}
+
+	class TemplateEvalContext(val template: Template) {
+		val name: String = template.name
+		val templates: Templates get() = template.templates
+
+		var parent: TemplateEvalContext? = null
+		val root: TemplateEvalContext get() = parent?.root ?: this
+
+		fun getBlockOrNull(name: String): BlockInTemplateEval? = template.blocks[name]?.let { BlockInTemplateEval(name, it, this@TemplateEvalContext) } ?: parent?.getBlockOrNull(name)
+		fun getBlock(name: String): BlockInTemplateEval = getBlockOrNull(name) ?: BlockInTemplateEval(name, DefaultBlocks.BlockText(""), this)
+
+		suspend fun exec(args: Any?): ExecResult {
+			val str = StringBuilder()
+			val scope = Scope(args)
+			if (template.frontMatter != null) for ((k, v) in template.frontMatter!!) scope.set(k, v)
+			val context = Template.EvalContext(this, scope, template.config, write = { str.append(it) })
+			eval(context)
+			return ExecResult(context, str.toString())
+		}
+
+		suspend fun exec(vararg args: Pair<String, Any?>): ExecResult = exec(hashMapOf(*args))
+
+		operator suspend fun invoke(args: Any?): String = exec(args).str
+		operator suspend fun invoke(vararg args: Pair<String, Any?>): String = exec(hashMapOf(*args)).str
+
+		suspend fun eval(context: Template.EvalContext) {
+			try {
+				context.setTempTemplate(this) {
+					context.createScope { template.rootNode.eval(context) }
+				}
+			} catch (e: StopEvaluatingException) {
+			}
+		}
+	}
+
+	class StopEvaluatingException : Exception()
+
 	class EvalContext(
-		val rootTemplate: Template,
-		var currentTemplate: Template,
+		var currentTemplate: TemplateEvalContext,
 		var scope: Template.Scope,
 		val config: TemplateConfig,
-		var write: (str: String) -> Unit,
-		var templateStack: LinkedList<Template> = LinkedList()
+		var write: (str: String) -> Unit
 	) {
+		val leafTemplate: TemplateEvalContext = currentTemplate
+		val templates = currentTemplate.templates
 		val macros = hashMapOf<String, Macro>()
-		val templates = rootTemplate.templates
-		var currentBlockName: String? = null
+		var currentBlock: BlockInTemplateEval? = null
 
-		var parentTemplate: Template? = null
+		inline fun <T> setTempTemplate(template: TemplateEvalContext, callback: () -> T): T {
+			val oldTemplate = this.currentTemplate
+			try {
+				this.currentTemplate = template
+				return callback()
+			} finally {
+				this.currentTemplate = oldTemplate
+			}
+		}
 
 		inline fun capture(callback: () -> Unit): String = this.run {
 			var out = ""
@@ -129,24 +156,6 @@ class Template internal constructor(
 
 		inline fun captureRaw(callback: () -> Unit): RawString = RawString(capture(callback))
 
-		inline fun <T> tempDropLastTemplate(callback: () -> T): T = tempDropTemplate(first = false, callback = callback)
-		inline fun <T> tempDropFirstTemplate(callback: () -> T): T = tempDropTemplate(first = true, callback = callback)
-
-		inline fun <T> tempDropTemplate(first: Boolean, callback: () -> T): T {
-			val oldParentTemplate = parentTemplate
-			val oldCurrentTemplate = currentTemplate
-			val oldTemplateStack = if (first) this@EvalContext.templateStack.removeFirst() else this@EvalContext.templateStack.removeLast()
-			try {
-				currentTemplate = oldTemplateStack
-				parentTemplate = if (first) templateStack.firstOrNull() else templateStack.lastOrNull()
-				return callback()
-			} finally {
-				templateStack.addLast(oldTemplateStack)
-				parentTemplate = oldParentTemplate
-				currentTemplate = oldCurrentTemplate
-			}
-		}
-
 		inline fun <T> createScope(callback: () -> T): T {
 			val old = this.scope
 			try {
@@ -158,17 +167,12 @@ class Template internal constructor(
 		}
 	}
 
-	fun getBlock(context: Template.EvalContext, name: String): Block {
-		for (t in context.templateStack) {
-			val block = t.blocks[name]
-			if (block != null) return block
-		}
-		return DefaultBlocks.BlockText("")
-	}
-
 	fun addBlock(name: String, body: Block) {
 		blocks[name] = body
 	}
+
+	suspend operator fun invoke(hashMap: Any?): String = Template.TemplateEvalContext(this).invoke(hashMap)
+	suspend operator fun invoke(vararg args: Pair<String, Any?>): String = Template.TemplateEvalContext(this).invoke(*args)
 }
 
 suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template {
