@@ -1,5 +1,6 @@
 package com.soywiz.korte.filter
 
+import com.soywiz.korio.serialization.json.Json
 import com.soywiz.korio.util.allDeclaredFields
 import com.soywiz.korio.util.clamp
 import com.soywiz.korio.util.quote
@@ -36,6 +37,9 @@ object DefaultFilters {
 	@JvmField val Merge = Filter("merge") { subject, args ->
 		val arg = args.getOrNull(0)
 		subject.toDynamicList() + arg.toDynamicList()
+	}
+	@JvmField val JsonEncode = Filter("json_encode") { subject, _ ->
+		Json.encode(subject)
 	}
 
 	val ALL by lazy {

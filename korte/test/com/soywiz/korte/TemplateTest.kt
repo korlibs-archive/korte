@@ -120,6 +120,10 @@ class TemplateTest : BaseTest() {
 		Assert.assertEquals("[1, 2, 3, 4]", Template("{{ [1, 2]|merge([3, 4]) }}")(null))
 	}
 
+	@Test fun testJsonEncode() = syncTest {
+		Assert.assertEquals("{\"a\":2.0}", Template("{{ {'a': 2}|json_encode()|raw }}")(null))
+	}
+
 	@Test fun testTernary() = syncTest {
 		Assert.assertEquals("2", Template("{{ 1 ? 2 : 3 }}")(null))
 		Assert.assertEquals("3", Template("{{ 0 ? 2 : 3 }}")(null))
