@@ -124,6 +124,10 @@ class TemplateTest : BaseTest() {
 		Assert.assertEquals("{\"a\":2}", Template("{{ {'a': 2}|json_encode()|raw }}")(null))
 	}
 
+	@Test fun testComment() = syncTest {
+		Assert.assertEquals("a", Template("{# {{ 1 }} #}a{# #}")(null))
+	}
+
 	@Test fun testFormat() = syncTest {
 		Assert.assertEquals("hello test of 3", Template("{{ 'hello %s of %d'|format('test', 3) }}")(null))
 	}

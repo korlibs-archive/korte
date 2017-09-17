@@ -21,41 +21,54 @@ sealed class Token {
 			}
 
 			var pos = 0
-			while (pos < str.length) {
+			loop@ while (pos < str.length) {
 				val c = str[pos++]
-				// {% {{ }} %}
+				// {# {% {{ }} %} #}
 				if (c == '{') {
 					if (pos >= str.length) break
 					val c2 = str[pos++]
-					if (c2 == '{' || c2 == '%') {
-						val startPos = pos - 2
-						val pos2 = if (c2 == '{') str.indexOf("}}", pos) else str.indexOf("%}", pos)
-						if (pos2 < 0) break
-						val trimLeft = str[pos] == '-'
-						val trimRight = str[pos2 - 1] == '-'
-
-						val p1 = if (trimLeft) pos + 1 else pos
-						val p2 = if (trimRight) pos2 - 1 else pos2
-
-						val content = str.substring(p1, p2).trim()
-
-						if (lastPos != startPos) {
-							emit(TLiteral(str.substring(lastPos until startPos)))
+					when (c2) {
+						// Comment
+						'#' -> {
+							val startPos = pos - 2
+							if (lastPos != startPos) {
+								emit(TLiteral(str.substring(lastPos until startPos)))
+							}
+							val endCommentP1 = str.indexOf("#}", startIndex = pos)
+							val endComment = if (endCommentP1 >= 0) endCommentP1 + 2 else str.length
+							lastPos = endComment
+							pos = endComment
 						}
+						'{', '%' -> {
+							val startPos = pos - 2
+							val pos2 = if (c2 == '{') str.indexOf("}}", pos) else str.indexOf("%}", pos)
+							if (pos2 < 0) break@loop
+							val trimLeft = str[pos] == '-'
+							val trimRight = str[pos2 - 1] == '-'
 
-						val token = if (c2 == '{') {
-							//println("expr: '$content'")
-							TExpr(content)
-						} else {
-							val parts = content.split(' ', limit = 2)
-							//println("tag: '$content'")
-							TTag(parts[0], parts.getOrElse(1) { "" })
+							val p1 = if (trimLeft) pos + 1 else pos
+							val p2 = if (trimRight) pos2 - 1 else pos2
+
+							val content = str.substring(p1, p2).trim()
+
+							if (lastPos != startPos) {
+								emit(TLiteral(str.substring(lastPos until startPos)))
+							}
+
+							val token = if (c2 == '{') {
+								//println("expr: '$content'")
+								TExpr(content)
+							} else {
+								val parts = content.split(' ', limit = 2)
+								//println("tag: '$content'")
+								TTag(parts[0], parts.getOrElse(1) { "" })
+							}
+							token.trimLeft = trimLeft
+							token.trimRight = trimRight
+							emit(token)
+							pos = pos2 + 2
+							lastPos = pos
 						}
-						token.trimLeft = trimLeft
-						token.trimRight = trimRight
-						emit(token)
-						pos = pos2 + 2
-						lastPos = pos
 					}
 				}
 			}
