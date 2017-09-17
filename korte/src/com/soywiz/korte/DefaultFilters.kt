@@ -1,11 +1,9 @@
-package com.soywiz.korte.filter
+package com.soywiz.korte
 
 import com.soywiz.korio.serialization.json.Json
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.clamp
 import com.soywiz.korio.util.quote
-import com.soywiz.korte.Filter
-import com.soywiz.korte.RawString
 
 @Suppress("unused")
 object DefaultFilters {

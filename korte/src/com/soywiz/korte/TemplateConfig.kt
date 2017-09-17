@@ -1,8 +1,5 @@
 package com.soywiz.korte
 
-import com.soywiz.korte.filter.DefaultFilters
-import com.soywiz.korte.tag.DefaultTags
-
 class TemplateConfig(
 	extraTags: List<Tag> = listOf(),
 	extraFilters: List<Filter> = listOf()

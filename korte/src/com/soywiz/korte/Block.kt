@@ -5,16 +5,12 @@ import com.soywiz.korio.error.invalidOp
 import com.soywiz.korio.serialization.yaml.Yaml
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.ListReader
-import com.soywiz.korte.block.BlockExpr
-import com.soywiz.korte.block.BlockGroup
-import com.soywiz.korte.block.BlockText
-import com.soywiz.korte.tag.DefaultTags
 
 interface Block : Dynamic.Context {
 	suspend fun eval(context: Template.EvalContext): Unit
 
 	companion object {
-		fun group(children: List<Block>): Block = if (children.size == 1) children[0] else BlockGroup(children)
+		fun group(children: List<Block>): Block = if (children.size == 1) children[0] else DefaultBlocks.BlockGroup(children)
 
 		class Parse(val tokens: List<Token>, val parseContext: Template.ParseContext) {
 			val tr = ListReader(tokens)
@@ -50,9 +46,9 @@ interface Block : Dynamic.Context {
 									}
 								}
 							}
-							children += BlockText(text)
+							children += DefaultBlocks.BlockText(text)
 						}
-						is Token.TExpr -> children += BlockExpr(ExprNode.parse(it.content))
+						is Token.TExpr -> children += DefaultBlocks.BlockExpr(ExprNode.parse(it.content))
 						is Token.TTag -> {
 							when (it.name) {
 								in (tag.end ?: setOf()) -> break@loop
@@ -66,7 +62,7 @@ interface Block : Dynamic.Context {
 									if (newtag.end != null) {
 										children += handle(newtag, it)
 									} else {
-										children += newtag.buildNode.await(Tag.BuildContext(parseContext, listOf(Tag.Part(it, BlockText("")))))
+										children += newtag.buildNode.await(Tag.BuildContext(parseContext, listOf(Tag.Part(it, DefaultBlocks.BlockText("")))))
 									}
 								}
 							}

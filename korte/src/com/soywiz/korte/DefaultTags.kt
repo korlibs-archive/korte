@@ -1,9 +1,6 @@
-package com.soywiz.korte.tag
+package com.soywiz.korte
 
 import com.soywiz.korio.util.Dynamic
-import com.soywiz.korte.*
-import com.soywiz.korte.block.*
-import com.soywiz.korte.filter.DefaultFilters
 
 @Suppress("unused")
 object DefaultTags {
@@ -14,7 +11,7 @@ object DefaultTags {
 		val name = ExprNode.parseId(tokens)
 		if (name.isEmpty()) throw IllegalArgumentException("block without name")
 		context.template.addBlock(name, part.body)
-		BlockBlock(name)
+		DefaultBlocks.BlockBlock(name)
 	}
 
 	@JvmStatic
@@ -22,12 +19,12 @@ object DefaultTags {
 		val main = chunks[0]
 		val tr = ExprNode.Token.tokenize(main.tag.content)
 		val varname = ExprNode.parseId(tr)
-		BlockCapture(varname, main.body)
+		DefaultBlocks.BlockCapture(varname, main.body)
 	}
 
 	@JvmStatic
 	val Debug = Tag("debug", setOf(), null) {
-		BlockDebug(ExprNode.parse(chunks[0].tag.content))
+		DefaultBlocks.BlockDebug(ExprNode.parse(chunks[0].tag.content))
 	}
 
 	@JvmStatic
@@ -39,7 +36,7 @@ object DefaultTags {
 	val Extends = Tag("extends", setOf(), null) {
 		val part = chunks.first()
 		val parent = ExprNode.parseExpr(ExprNode.Token.tokenize(part.tag.content))
-		BlockExtends(parent)
+		DefaultBlocks.BlockExtends(parent)
 	}
 
 	@JvmStatic
@@ -53,7 +50,7 @@ object DefaultTags {
 		} while (tr.tryRead(",") != null)
 		ExprNode.expect(tr, "in")
 		val expr = ExprNode.parseExpr(tr)
-		BlockFor(varnames, expr, main.body, elseTag)
+		DefaultBlocks.BlockFor(varnames, expr, main.body, elseTag)
 	}
 
 	@JvmStatic
@@ -72,9 +69,9 @@ object DefaultTags {
 			}
 		}
 		val ifBranchesRev = ifBranches.reversed()
-		var node: Block = BlockIf(ifBranchesRev.first().first, ifBranchesRev.first().second, elseBranch)
+		var node: Block = DefaultBlocks.BlockIf(ifBranchesRev.first().first, ifBranchesRev.first().second, elseBranch)
 		for (branch in ifBranchesRev.takeLast(ifBranchesRev.size - 1)) {
-			node = BlockIf(branch.first, branch.second, node)
+			node = DefaultBlocks.BlockIf(branch.first, branch.second, node)
 		}
 
 		node
@@ -87,14 +84,14 @@ object DefaultTags {
 		val file = s.parseExpr()
 		s.expect("as")
 		val name = s.read().text
-		BlockImport(file, name)
+		DefaultBlocks.BlockImport(file, name)
 	}
 
 	@JvmStatic
 	val Include = Tag("include", setOf(), null) {
 		val part = chunks.first()
 		val fileName = ExprNode.parseExpr(part.tag.tokens)
-		BlockInclude(fileName)
+		DefaultBlocks.BlockInclude(fileName)
 	}
 
 	@JvmStatic
@@ -105,7 +102,7 @@ object DefaultTags {
 		s.expect("(")
 		val params = s.parseIdList()
 		s.expect(")")
-		BlockMacro(funcname, params, part.body)
+		DefaultBlocks.BlockMacro(funcname, params, part.body)
 	}
 
 	@JvmStatic
@@ -115,7 +112,7 @@ object DefaultTags {
 		val varname = ExprNode.parseId(tr)
 		ExprNode.expect(tr, "=")
 		val expr = ExprNode.parseExpr(tr)
-		BlockSet(varname, expr)
+		DefaultBlocks.BlockSet(varname, expr)
 	}
 
 	val ALL by lazy { Dynamic.getStaticTypedFields<Tag>(javaClass) }

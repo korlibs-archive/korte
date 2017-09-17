@@ -4,10 +4,6 @@ import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.Extra
 import com.soywiz.korio.vfs.MemoryVfs
-import com.soywiz.korte.block.BlockCapture
-import com.soywiz.korte.block.BlockExtends
-import com.soywiz.korte.block.BlockGroup
-import com.soywiz.korte.block.BlockText
 import java.util.*
 import kotlin.collections.set
 
@@ -30,9 +26,9 @@ class Template internal constructor(
 		if (frontMatter != null) {
 			val layout = frontMatter?.get("layout")
 			if (layout != null) {
-				rootNode = BlockGroup(listOf(
-					BlockCapture("content", rootNode),
-					BlockExtends(ExprNode.LIT(layout))
+				rootNode = DefaultBlocks.BlockGroup(listOf(
+					DefaultBlocks.BlockCapture("content", rootNode),
+					DefaultBlocks.BlockExtends(ExprNode.LIT(layout))
 				))
 			}
 		}
@@ -161,7 +157,7 @@ class Template internal constructor(
 			val block = t.blocks[name]
 			if (block != null) return block
 		}
-		return BlockText("")
+		return DefaultBlocks.BlockText("")
 	}
 
 	fun addBlock(name: String, body: Block) {
