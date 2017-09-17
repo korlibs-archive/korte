@@ -36,9 +36,7 @@ class RootRoute(
 	}
 
 	@Route(Http.Methods.GET, "/*", priority = RoutePriority.LOWEST)
-	suspend fun static(req: HttpServer.Request): VfsFile {
-		return staticRoot[req.uri]
-	}
+	suspend fun static(req: HttpServer.Request): VfsFile = staticRoot[req.path]
 
 	@Route(Http.Methods.GET, "/demo")
 	suspend fun demo(): String {
