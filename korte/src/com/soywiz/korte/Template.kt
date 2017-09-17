@@ -127,6 +127,8 @@ class Template internal constructor(
 			out
 		}
 
+		inline fun captureRaw(callback: () -> Unit): RawString = RawString(capture(callback))
+
 		inline fun <T> tempDropLastTemplate(callback: () -> T): T = tempDropTemplate(first = false, callback = callback)
 		inline fun <T> tempDropFirstTemplate(callback: () -> T): T = tempDropTemplate(first = true, callback = callback)
 

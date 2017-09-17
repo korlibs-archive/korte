@@ -32,17 +32,18 @@ object DefaultFunctions {
 			""
 		} else {
 			//ctx.tempDropTemplate {
-			ctx.tempDropFirstTemplate {
+			val out: Any? = ctx.tempDropFirstTemplate {
 				val current = ctx.currentTemplate
 				val blockName = ctx.currentBlockName
 				if (blockName != null) {
-					ctx.capture {
+					ctx.captureRaw {
 						current.getBlock(ctx, blockName).eval(ctx)
 					}
 				} else {
 					""
 				}
 			}
+			out
 		}
 	}
 
