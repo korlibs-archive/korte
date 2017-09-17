@@ -7,6 +7,7 @@ import com.soywiz.korte.Filter
 import com.soywiz.korte.RawString
 import java.lang.reflect.Modifier
 
+@Suppress("unused")
 object DefaultFilters {
 	@JvmField val Capitalize = Filter("capitalize") { subject, _ -> subject.toDynamicString().toLowerCase().capitalize() }
 	@JvmField val Join = Filter("join") { subject, args -> subject.toDynamicList().map { it.toDynamicString() }.joinToString(args[0].toDynamicString()) }
@@ -32,6 +33,10 @@ object DefaultFilters {
 	}
 	@JvmField val Trim = Filter("trim") { subject, _ -> subject.toDynamicString().trim() }
 	@JvmField val Upper = Filter("upper") { subject, _ -> subject.toDynamicString().toUpperCase() }
+	@JvmField val Merge = Filter("merge") { subject, args ->
+		val arg = args.getOrNull(0)
+		subject.toDynamicList() + arg.toDynamicList()
+	}
 
 	val ALL by lazy {
 		val list = arrayListOf<Filter>()
