@@ -18,7 +18,8 @@ class TemplateConfig(
 	val integratedTags = listOf(
 		TagEmpty, TagIf, TagFor, SetTag, CaptureTag,
 		TagDebug,
-		TagBlock, TagExtends, TagInclude
+		TagBlock, TagExtends, TagInclude,
+		TagImport, TagMacro
 	)
 
 	private val allTags = integratedTags + extraTags

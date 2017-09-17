@@ -62,7 +62,7 @@ interface Block : Dynamic.Context {
 									children.clear()
 								}
 								else -> {
-									val newtag = parseContext.config.tags[it.name] ?: invalidOp("Can't find tag ${it.name}")
+									val newtag = parseContext.config.tags[it.name] ?: invalidOp("Can't find tag ${it.name} with content ${it.content}")
 									if (newtag.end != null) {
 										children += handle(newtag, it)
 									} else {

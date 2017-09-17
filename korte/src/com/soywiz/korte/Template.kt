@@ -4,7 +4,6 @@ import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.Extra
 import com.soywiz.korio.vfs.MemoryVfs
-import com.soywiz.korte.Token
 import com.soywiz.korte.block.BlockCapture
 import com.soywiz.korte.block.BlockExtends
 import com.soywiz.korte.block.BlockGroup
@@ -73,17 +72,38 @@ class Template internal constructor(
 		}
 	}
 
+	data class ExecResult(val context: Template.EvalContext, val str: String)
 
-	operator suspend fun invoke(args: Any?): String {
+	suspend fun exec(args: Any?): ExecResult {
 		val str = StringBuilder()
 		val scope = Scope(args)
 		if (frontMatter != null) for ((k, v) in frontMatter!!) scope.set(k, v)
 		val context = Template.EvalContext(this, this, scope, config, write = { str.append(it) })
 		eval(context)
-		return str.toString()
+		return ExecResult(context, str.toString())
 	}
 
-	operator suspend fun invoke(vararg args: Pair<String, Any?>): String = invoke(hashMapOf(*args))
+	suspend fun exec(vararg args: Pair<String, Any?>): ExecResult = exec(hashMapOf(*args))
+
+	operator suspend fun invoke(args: Any?): String = exec(args).str
+	operator suspend fun invoke(vararg args: Pair<String, Any?>): String = exec(hashMapOf(*args)).str
+
+	interface DynamicInvokable {
+		suspend fun invoke(ctx: Template.EvalContext, args: List<Any?>): Any?
+	}
+
+	class Macro(val name: String, val argNames: List<String>, val code: Block) : DynamicInvokable {
+		override suspend fun invoke(ctx: Template.EvalContext, args: List<Any?>): Any? {
+			return ctx.createScope {
+				for ((key, value) in this.argNames.zip(args)) {
+					ctx.scope.set(key, value)
+				}
+				RawString(ctx.capture {
+					code.eval(ctx)
+				})
+			}
+		}
+	}
 
 	class EvalContext(
 		val rootTemplate: Template,
@@ -93,6 +113,7 @@ class Template internal constructor(
 		var write: (str: String) -> Unit,
 		var templateStack: LinkedList<Template> = LinkedList()
 	) {
+		val macros = hashMapOf<String, Macro>()
 		val templates = rootTemplate.templates
 
 		var parentTemplate: Template? = null
@@ -124,11 +145,11 @@ class Template internal constructor(
 			}
 		}
 
-		inline fun createScope(callback: () -> Unit) = this.apply {
+		inline fun <T> createScope(callback: () -> T): T {
 			val old = this.scope
 			try {
 				this.scope = Template.Scope(hashMapOf<Any?, Any?>(), old)
-				callback()
+				return callback()
 			} finally {
 				this.scope = old
 			}

@@ -54,10 +54,22 @@ interface ExprNode : Dynamic.Context {
 	data class CALL(val method: ExprNode, val args: List<ExprNode>) : ExprNode {
 		override suspend fun eval(context: Template.EvalContext): Any? {
 			val processedArgs = args.map { it.eval(context) }.toTypedArray()
-			return if (method !is ExprNode.ACCESS) {
-				method.eval(context).dynamicCall(*processedArgs)
-			} else {
-				method.expr.eval(context).dynamicCallMethod(method.name.eval(context), *processedArgs)
+			when (method) {
+				is ExprNode.ACCESS -> {
+					val obj = method.expr.eval(context)
+					val methodName = method.name.eval(context)
+					//println("" + obj + ":" + methodName)
+					if (obj is Map<*, *>) {
+						val k = obj[methodName]
+						if (k is Template.DynamicInvokable) {
+							return k.invoke(context, processedArgs.toList())
+						}
+					}
+					return obj.dynamicCallMethod(methodName, *processedArgs)
+				}
+				else -> {
+					return method.eval(context).dynamicCall(*processedArgs)
+				}
 			}
 		}
 	}
@@ -335,4 +347,14 @@ fun ListReader<ExprNode.Token>.expect(vararg types: String): ExprNode.Token {
 	val token = this.read()
 	if (token.text !in types) throw java.lang.RuntimeException("Expected ${types.joinToString(", ")}")
 	return token
+}
+
+fun ListReader<ExprNode.Token>.parseExpr() = ExprNode.parseExpr(this)
+fun ListReader<ExprNode.Token>.parseId() = ExprNode.parseId(this)
+fun ListReader<ExprNode.Token>.parseIdList(): List<String> {
+	val ids = arrayListOf<String>()
+	do {
+		ids += parseId()
+	} while (tryRead(",") != null)
+	return ids
 }

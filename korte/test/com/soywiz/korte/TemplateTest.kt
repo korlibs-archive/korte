@@ -2,6 +2,7 @@ package com.soywiz.korte
 
 import com.soywiz.korio.async.*
 import com.soywiz.korio.util.asyncCaptureStdout
+import com.soywiz.korio.vfs.MemoryVfsMix
 import org.junit.Assert
 import org.junit.Test
 
@@ -232,4 +233,13 @@ class TemplateTest : BaseTest() {
 	}
 
 	data class Person(val name: String, val surname: String)
+
+	@Test fun testImportMacros() = syncTest {
+		val templates = Templates(MemoryVfsMix(
+				"root.html" to "{% import '_macros.html' as macros %}{{ macros.putUserLink('hello') }}",
+				"_macros.html" to "{% macro putUserLink(user) %}<a>{{ user }}</a>{% endmacro %}"
+		))
+
+		Assert.assertEquals("<a>hello</a>", templates.get("root.html").invoke(hashMapOf<Any, Any?>()))
+	}
 }
