@@ -123,7 +123,8 @@ interface ExprNode : Dynamic.Context {
 			listOf("==", "!=", "<", ">", "<=", ">=", "<=>"),
 			listOf("&&"),
 			listOf("||"),
-			listOf("in")
+			listOf("in"),
+			listOf("?:")
 		)
 
 		private val BINOPS = BINOPS_PRIORITIES_LIST.withIndex()
@@ -132,13 +133,13 @@ interface ExprNode : Dynamic.Context {
 
 		fun binopPr(str: String) = BINOPS[str] ?: 0
 
-		fun parseExpr(r: ListReader<Token>): ExprNode {
-			var result = ExprNode.parseFinal(r)
+		fun parseBinExpr(r: ListReader<Token>): ExprNode {
+			var result = parseFinal(r)
 			while (r.hasMore) {
 				//if (r.peek() !is ExprNode.Token.TOperator || r.peek().text !in ExprNode.BINOPS) break
 				if (r.peek().text !in ExprNode.BINOPS) break
 				val operator = r.read().text
-				val right = ExprNode.parseFinal(r)
+				val right = parseFinal(r)
 				if (result is BINOP) {
 					val a = result.l
 					val lop = result.op
@@ -156,6 +157,8 @@ interface ExprNode : Dynamic.Context {
 			}
 			return result
 		}
+
+		fun parseExpr(r: ListReader<Token>): ExprNode = parseBinExpr(r)
 
 		private fun parseFinal(r: ListReader<Token>): ExprNode {
 			var construct: ExprNode = when (r.peek().text) {
@@ -288,9 +291,10 @@ interface ExprNode : Dynamic.Context {
 				"&&", "||",
 				"&", "|", "^",
 				"==", "!=", "<", ">", "<=", ">=", "<=>",
+				"?:",
 				"+", "-", "*", "/", "%", "**",
 				"!", "~",
-				".", ",", ";", ":",
+				".", ",", ";", ":", "?",
 				"="
 			)
 
