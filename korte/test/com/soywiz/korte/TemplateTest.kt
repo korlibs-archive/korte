@@ -60,6 +60,11 @@ class TemplateTest : BaseTest() {
 		Assert.assertEquals("false", Template("{% if cond %}true{% else %}false{% end %}")("cond" to 0))
 		Assert.assertEquals("true", Template("{% if cond %}true{% end %}")("cond" to 1))
 		Assert.assertEquals("", Template("{% if cond %}true{% end %}")("cond" to 0))
+
+	}
+
+	@Test fun testNot() = syncTest {
+		Assert.assertEquals("true", Template("{% if not cond %}true{% end %}")("cond" to 0))
 	}
 
 	@Test fun testSimpleElseIf() = syncTest {

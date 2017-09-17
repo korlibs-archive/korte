@@ -172,9 +172,9 @@ interface ExprNode : Dynamic.Context {
 			var left = this.parseBinExpr(r)
 			if (r.peek().text == "?") {
 				r.skip();
-				var middle = parseExpr(r)
+				val middle = parseExpr(r)
 				r.expect(":")
-				var right = parseExpr(r)
+				val right = parseExpr(r)
 				left = TERNARY(left, middle, right);
 			}
 			return left;
@@ -183,10 +183,15 @@ interface ExprNode : Dynamic.Context {
 		fun parseExpr(r: ListReader<Token>): ExprNode = parseTernaryExpr(r)
 
 		private fun parseFinal(r: ListReader<Token>): ExprNode {
-			var construct: ExprNode = when (r.peek().text) {
-				"!", "~", "-", "+" -> {
-					val op = r.read().text
-					UNOP(parseFinal(r), op)
+			val tok = r.peek().text.toUpperCase()
+			var construct: ExprNode = when (tok) {
+				"!", "~", "-", "+", "NOT" -> {
+					val op = tok
+					r.skip()
+					UNOP(parseFinal(r), when (op) {
+						"NOT" -> "!"
+						else -> op
+					})
 				}
 				"(" -> {
 					r.read()
