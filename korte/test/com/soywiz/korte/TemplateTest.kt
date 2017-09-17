@@ -191,6 +191,12 @@ class TemplateTest : BaseTest() {
 		Assert.assertEquals("b", Template("{{ cycle(['a', 'b'], -1) }}")())
 	}
 
+	@Test fun testRange() = syncTest {
+		Assert.assertEquals("[0, 1, 2, 3]", Template("{{ 0..3 }}")())
+		Assert.assertEquals("[0, 1, 2, 3]", Template("{{ range(0,3) }}")())
+		Assert.assertEquals("[0, 2]", Template("{{ range(0,3,2) }}")())
+	}
+
 	@Test fun testEscape() = syncTest {
 		Assert.assertEquals("<b>&lt;a&gt;</b>", Template("<b>{{ a }}</b>")("a" to "<a>"))
 		Assert.assertEquals("<b><a></b>", Template("<b>{{ a|raw }}</b>")("a" to "<a>"))

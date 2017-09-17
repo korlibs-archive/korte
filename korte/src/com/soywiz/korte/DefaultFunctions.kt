@@ -12,5 +12,19 @@ object DefaultFunctions {
 		list[index umod list.size]
 	}
 
+	@JvmStatic
+	val Range = TeFunction("range") { args, _ ->
+		val left = args.getOrNull(0)
+		val right = args.getOrNull(1)
+		val step = (args.getOrNull(2) ?: 1).toDynamicInt()
+		if (left is Number || right is Number) {
+			val l = left.toDynamicInt()
+			val r = right.toDynamicInt()
+			((l..r) step step).toList()
+		} else {
+			TODO("Unsupported '$left'/'$right' for ranges")
+		}
+	}
+
 	val ALL by lazy { Dynamic.getStaticTypedFields<TeFunction>(javaClass) }
 }

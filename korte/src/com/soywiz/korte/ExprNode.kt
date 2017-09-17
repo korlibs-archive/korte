@@ -84,6 +84,7 @@ interface ExprNode : Dynamic.Context {
 			val rr = r.eval(context)
 			return when (op) {
 				"~" -> lr.toDynamicString() + rr.toDynamicString()
+				".." -> DefaultFunctions.Range.eval(listOf(lr, rr), context)
 				else -> Dynamic.binop(lr, rr, op)
 			}
 		}
@@ -138,6 +139,7 @@ interface ExprNode : Dynamic.Context {
 			listOf("&&"),
 			listOf("||"),
 			listOf("in"),
+			listOf(".."),
 			listOf("?:")
 		)
 
@@ -328,6 +330,7 @@ interface ExprNode : Dynamic.Context {
 				"&", "|", "^",
 				"==", "!=", "<", ">", "<=", ">=", "<=>",
 				"?:",
+				"..",
 				"+", "-", "*", "/", "%", "**",
 				"!", "~",
 				".", ",", ";", ":", "?",
