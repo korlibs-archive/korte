@@ -34,7 +34,7 @@ class RootRoute(
 	@Route(Http.Methods.GET, "/")
 	suspend fun root() = templates.prender("index.html")
 
-	@Route(Http.Methods.GET, "/*", priority = RoutePriority.LOWEST)
+	@Route(Http.Methods.ALL, "*", priority = RoutePriority.LOWEST)
 	suspend fun static(req: HttpServer.Request): VfsFile = staticRoot[req.path]
 
 	@Route(Http.Methods.GET, "/demo")
