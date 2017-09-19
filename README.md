@@ -1,10 +1,10 @@
 # Kotlin cORoutines Template Engine
 
-![](https://raw.githubusercontent.com/soywiz/kor/master/logos/128/korte.png)
+![](https://raw.githubusercontent.com/korlibs/korlibs-logos/master/128/korte.png)
 
-[All KOR libraries](https://github.com/soywiz/kor)
+[All KOR libraries](https://github.com/korlibs/kor)
 
-Port of my template engine based on twig/django [atpl.js](https://github.com/soywiz/atpl.js) + goodies.
+Port of my template engine based on twig/django [atpl.js](https://github.com/korlibs/atpl.js) + goodies.
 
 Allow **suspension points** on read properties and method calling. Uses korio and virtual filesystems.
 
@@ -17,11 +17,11 @@ so no more ruby installing issues or file watching issues on windows.
 
 ## Live demo
 
-Online interactive real-time live demo using [Korte](https://github.com/soywiz/korte) + [Korui](https://github.com/soywiz/korui) compiled to JavaScript using [JTransc](https://github.com/jtransc/jtransc):
+Online interactive real-time live demo using [Korte](https://github.com/korlibs/korte) + [Korui](https://github.com/korlibs/korui) compiled to JavaScript using [JTransc](https://github.com/jtransc/jtransc):
 
-[https://soywiz.github.io/kor_samples/korte1/](https://soywiz.github.io/kor_samples/korte1/)
+[https://korlibs.github.io/kor_samples/korte1/](https://korlibs.github.io/kor_samples/korte1/)
 
-[![](docs/korte_sample.png)](https://soywiz.github.io/kor_samples/korte1/)
+[![](docs/korte_sample.png)](https://korlibs.github.io/kor_samples/korte1/)
 
 ## Supported stuff
 
