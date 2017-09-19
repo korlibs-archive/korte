@@ -1,7 +1,10 @@
 package com.soywiz.korte.web.example
 
 import com.soywiz.korio.async.Korio
-import com.soywiz.korio.ext.web.router.*
+import com.soywiz.korio.ext.web.router.Route
+import com.soywiz.korio.ext.web.router.RoutePriority
+import com.soywiz.korio.ext.web.router.registerRoutes
+import com.soywiz.korio.ext.web.router.router
 import com.soywiz.korio.inject.AsyncInjector
 import com.soywiz.korio.net.http.Http
 import com.soywiz.korio.net.http.HttpServer
@@ -13,27 +16,23 @@ import com.soywiz.korte.Templates
 fun main(args: Array<String>) = Korio {
 	val templates = Templates(ResourcesVfs)
 	val injector = AsyncInjector()
-			.map(templates)
+		.map(templates)
 	val server = createHttpServer()
-			.router(KorRouter(injector)
-					.registerRoutes<RootRoute>()
-			)
-			.listen(8080)
+		.router(injector) {
+			registerRoutes<RootRoute>()
+		}
+		.listen(8080)
 	println("Listening at... ${server.actualPort}")
 }
 
 @Suppress("unused")
 class RootRoute(
-		val templates: Templates
+	val templates: Templates
 ) {
 	val staticRoot = ResourcesVfs["static"].jail()
 
 	@Route(Http.Methods.GET, "/")
-	suspend fun root(): String {
-		return templates.get("index.html").invoke(hashMapOf<String, Any?>(
-
-		))
-	}
+	suspend fun root() = templates.prender("index.html")
 
 	@Route(Http.Methods.GET, "/*", priority = RoutePriority.LOWEST)
 	suspend fun static(req: HttpServer.Request): VfsFile = staticRoot[req.path]

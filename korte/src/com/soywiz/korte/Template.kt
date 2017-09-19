@@ -1,6 +1,7 @@
 package com.soywiz.korte
 
 import com.soywiz.korio.stream.openAsync
+import com.soywiz.korio.text.AsyncTextWriterContainer
 import com.soywiz.korio.util.Dynamic
 import com.soywiz.korio.util.Extra
 import com.soywiz.korio.vfs.MemoryVfs
@@ -95,6 +96,22 @@ class Template internal constructor(
 		fun getBlockOrNull(name: String): BlockInTemplateEval? = template.blocks[name]?.let { BlockInTemplateEval(name, it, this@TemplateEvalContext) } ?: parent?.getBlockOrNull(name)
 		fun getBlock(name: String): BlockInTemplateEval = getBlockOrNull(name) ?: BlockInTemplateEval(name, DefaultBlocks.BlockText(""), this)
 
+		class WithArgs(val context: TemplateEvalContext, val args: Any?) : AsyncTextWriterContainer {
+			suspend override fun write(writer: suspend (String) -> Unit) {
+				context.exec2(args, writer)
+			}
+		}
+
+		fun withArgs(args: Any?) = WithArgs(this, args)
+
+		suspend fun exec2(args: Any?, writer: suspend (String) -> Unit): Template.EvalContext {
+			val scope = Scope(args)
+			if (template.frontMatter != null) for ((k, v) in template.frontMatter!!) scope.set(k, v)
+			val context = Template.EvalContext(this, scope, template.config, write = writer)
+			eval(context)
+			return context
+		}
+
 		suspend fun exec(args: Any?): ExecResult {
 			val str = StringBuilder()
 			val scope = Scope(args)
@@ -125,7 +142,7 @@ class Template internal constructor(
 		var currentTemplate: TemplateEvalContext,
 		var scope: Template.Scope,
 		val config: TemplateConfig,
-		var write: (str: String) -> Unit
+		var write: suspend (str: String) -> Unit
 	) {
 		val leafTemplate: TemplateEvalContext = currentTemplate
 		val templates = currentTemplate.templates
@@ -171,8 +188,18 @@ class Template internal constructor(
 		blocks[name] = body
 	}
 
-	suspend operator fun invoke(hashMap: Any?): String = Template.TemplateEvalContext(this).invoke(hashMap)
-	suspend operator fun invoke(vararg args: Pair<String, Any?>): String = Template.TemplateEvalContext(this).invoke(*args)
+	suspend fun createEvalContext() = Template.TemplateEvalContext(this)
+	suspend operator fun invoke(hashMap: Any?): String = createEvalContext().invoke(hashMap)
+	suspend operator fun invoke(vararg args: Pair<String, Any?>): String = createEvalContext().invoke(*args)
+
+	suspend fun prender(vararg args: Pair<String, Any?>): AsyncTextWriterContainer {
+		return createEvalContext().withArgs(HashMap(args.toMap()))
+	}
+
+	suspend fun prender(args: Map<String, Any?>): AsyncTextWriterContainer {
+		return createEvalContext().withArgs(args)
+	}
+
 }
 
 suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template {

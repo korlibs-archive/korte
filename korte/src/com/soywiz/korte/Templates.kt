@@ -1,5 +1,6 @@
 package com.soywiz.korte
 
+import com.soywiz.korio.text.AsyncTextWriterContainer
 import com.soywiz.korio.util.AsyncCache
 import com.soywiz.korio.vfs.VfsFile
 
@@ -33,5 +34,13 @@ class Templates(
 
 	suspend fun render(name: String, args: Map<String, Any?>): String {
 		return get(name).invoke(HashMap(args))
+	}
+
+	suspend fun prender(name: String, vararg args: Pair<String, Any?>): AsyncTextWriterContainer {
+		return get(name).prender(*args)
+	}
+
+	suspend fun prender(name: String, args: Map<String, Any?>): AsyncTextWriterContainer {
+		return get(name).prender(args)
 	}
 }
