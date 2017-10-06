@@ -2,6 +2,7 @@ apply plugin: 'kotlin'
 
 dependencies {
     compile project(":korte")
+    compile project(":korte-common")
     compile "com.soywiz:korio-vertx:$korVersion"
     compile "io.vertx:vertx-core:$vertxVersion"
     compile "io.vertx:vertx-web:$vertxVersion"
@@ -15,4 +16,8 @@ repositories {
     mavenLocal()
     jcenter()
     mavenCentral()
+}
+
+kotlin {
+    experimental { coroutines 'enable' }
 }

@@ -25,3 +25,7 @@ jtransc {
     treeshaking = true
     //treeshaking = false
 }
+
+kotlin {
+    experimental { coroutines 'enable' }
+}

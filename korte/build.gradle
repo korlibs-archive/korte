@@ -1,6 +1,16 @@
-apply plugin: 'kotlin'
+apply plugin: 'kotlin-platform-jvm'
 
 dependencies {
-    //compile project(":korio")
-    //compile "io.vertx:vertx-core:$vertxVersion"
+    implement project(":korte-common")
+    testImplementation project(":korte-common")
+
+    compile "com.soywiz:korio:$korVersion"
+
+    compile libraries.kotlin_stdlib_jvm
+    testCompile libraries.kotlin_test_jvm
+    testCompile 'junit:junit:4.12'
+}
+
+kotlin {
+    experimental { coroutines 'enable' }
 }
