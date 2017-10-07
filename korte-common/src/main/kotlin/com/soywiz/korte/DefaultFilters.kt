@@ -41,7 +41,7 @@ object DefaultFilters {
 		Json.encode(subject)
 	}
 	val Format = Filter("format") { subject, args, _ ->
-		subject.toString().format(*args.toTypedArray() as Array<out Any>)
+		subject.toDynamicString().format(*args.toTypedArray() as Array<out Any>)
 	}
 
 	val ALL = listOf(

@@ -4,60 +4,55 @@ import com.soywiz.korio.error.noImpl
 import com.soywiz.korio.util.quote
 import com.soywiz.korio.util.toNumber
 import kotlin.math.pow
-import kotlin.reflect.KClass
 
 object Dynamic2 {
-	fun binop(l: Any?, r: Any?, op: String): Any? {
-		return when (op) {
-			"+" -> {
-				when (l) {
-					is String -> l.toString() + toString(r)
-					is Iterable<*> -> toIterable(l) + toIterable(r)
-					else -> toDouble(l) + toDouble(r)
-				}
+	fun binop(l: Any?, r: Any?, op: String): Any? = when (op) {
+		"+" -> {
+			when (l) {
+				is String -> l.toString() + toString(r)
+				is Iterable<*> -> toIterable(l) + toIterable(r)
+				else -> toDouble(l) + toDouble(r)
 			}
-			"-" -> toDouble(l) - toDouble(r)
-			"*" -> toDouble(l) * toDouble(r)
-			"/" -> toDouble(l) / toDouble(r)
-			"%" -> toDouble(l) % toDouble(r)
-			"**" -> toDouble(l).pow(toDouble(r))
-			"&" -> toInt(l) and toInt(r)
-			"or" -> toInt(l) or toInt(r)
-			"^" -> toInt(l) xor toInt(r)
-			"&&" -> toBool(l) && toBool(r)
-			"||" -> toBool(l) || toBool(r)
-			"==" -> {
-				if (l is Number && r is Number) {
-					l.toDouble() == r.toDouble()
-				} else {
-					l == r
-				}
-			}
-			"!=" -> {
-				if (l is Number && r is Number) {
-					l.toDouble() != r.toDouble()
-				} else {
-					l != r
-				}
-			}
-			"<" -> compare(l, r) < 0
-			"<=" -> compare(l, r) <= 0
-			">" -> compare(l, r) > 0
-			">=" -> compare(l, r) >= 0
-			"in" -> contains(r, l)
-			"?:" -> if (toBool(l)) l else r
-			else -> noImpl("Not implemented binary operator '$op'")
 		}
+		"-" -> toDouble(l) - toDouble(r)
+		"*" -> toDouble(l) * toDouble(r)
+		"/" -> toDouble(l) / toDouble(r)
+		"%" -> toDouble(l) % toDouble(r)
+		"**" -> toDouble(l).pow(toDouble(r))
+		"&" -> toInt(l) and toInt(r)
+		"or" -> toInt(l) or toInt(r)
+		"^" -> toInt(l) xor toInt(r)
+		"&&" -> toBool(l) && toBool(r)
+		"||" -> toBool(l) || toBool(r)
+		"==" -> {
+			if (l is Number && r is Number) {
+				l.toDouble() == r.toDouble()
+			} else {
+				l == r
+			}
+		}
+		"!=" -> {
+			if (l is Number && r is Number) {
+				l.toDouble() != r.toDouble()
+			} else {
+				l != r
+			}
+		}
+		"<" -> compare(l, r) < 0
+		"<=" -> compare(l, r) <= 0
+		">" -> compare(l, r) > 0
+		">=" -> compare(l, r) >= 0
+		"in" -> contains(r, l)
+		"?:" -> if (toBool(l)) l else r
+		else -> noImpl("Not implemented binary operator '$op'")
 	}
 
-	fun unop(r: Any?, op: String): Any? {
-		return when (op) {
-			"+" -> r
-			"-" -> -toDouble(r)
-			"~" -> toInt(r).inv()
-			"!" -> !toBool(r)
-			else -> noImpl("Not implemented unary operator $op")
-		}
+	fun unop(r: Any?, op: String): Any? = when (op) {
+		"+" -> r
+		"-" -> -toDouble(r)
+		"~" -> toInt(r).inv()
+		"!" -> !toBool(r)
+		else -> noImpl("Not implemented unary operator $op")
 	}
 
 	fun contains(collection: Any?, element: Any?): Boolean = when (collection) {
@@ -79,72 +74,67 @@ object Dynamic2 {
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	fun toComparable(it: Any?): Comparable<Any?> {
-		return when (it) {
-			null -> 0 as Comparable<Any?>
-			is Comparable<*> -> it as Comparable<Any?>
-			else -> it.toString() as Comparable<Any?>
-		}
+	fun toComparable(it: Any?): Comparable<Any?> = when (it) {
+		null -> 0 as Comparable<Any?>
+		is Comparable<*> -> it as Comparable<Any?>
+		else -> it.toString() as Comparable<Any?>
 	}
 
-	fun toBool(it: Any?): Boolean = toBoolOrNull(it) ?: false
-
-	fun toBoolOrNull(it: Any?): Boolean? {
-		return when (it) {
-			null -> null
-			is Boolean -> it
-			is String -> it.isNotEmpty() && it != "0" && it != "false"
-			else -> null
-		}
+	fun toBool(it: Any?): Boolean = when (it) {
+		null -> false
+		else -> toBoolOrNull(it) ?: true
 	}
-	fun toNumber(it: Any?): Number {
-		return when (it) {
-			null -> 0.0
-			is Number -> it
-			else -> it.toString().toNumber()
-		}
+
+	fun toBoolOrNull(it: Any?): Boolean? = when (it) {
+		null -> null
+		is Boolean -> it
+		is Number -> it.toDouble() != 0.0
+		is String -> it.isNotEmpty() && it != "0" && it != "false"
+		else -> null
+	}
+
+	fun toNumber(it: Any?): Number = when (it) {
+		null -> 0.0
+		is Number -> it
+		else -> it.toString().toNumber()
 	}
 
 	fun toInt(it: Any?): Int = toNumber(it).toInt()
 	fun toLong(it: Any?): Long = toNumber(it).toLong()
 	fun toDouble(it: Any?): Double = toNumber(it).toDouble()
 
-	fun toString(value: Any?): String {
-		return when (value) {
-			null -> ""
-			is String -> value
-			is Double -> {
-				if (value == value.toInt().toDouble()) {
-					value.toInt().toString()
-				} else {
-					value.toString()
-				}
+	fun toString(value: Any?): String = when (value) {
+		null -> ""
+		is String -> value
+		is Double -> {
+			if (value == value.toInt().toDouble()) {
+				value.toInt().toString()
+			} else {
+				value.toString()
 			}
-			is Iterable<*> -> "[" + value.map { toString(it) }.joinToString(", ") + "]"
-			is Map<*, *> -> "{" + value.map { toString(it.key).quote() + ": " + toString(it.value) }.joinToString(", ") + "}"
-			else -> value.toString()
 		}
+		is Iterable<*> -> "[" + value.map { toString(it) }.joinToString(", ") + "]"
+		is Map<*, *> -> "{" + value.map { toString(it.key).quote() + ": " + toString(it.value) }.joinToString(", ") + "}"
+		else -> value.toString()
 	}
 
-	fun length(subject: Any?): Int {
-		if (subject == null) return 0
-		if (subject is Array<*>) return subject.size
-		if (subject is List<*>) return subject.size
-		if (subject is Map<*, *>) return subject.size
-		if (subject is Iterable<*>) return subject.count()
-		return subject.toString().length
+	fun length(subject: Any?): Int = when (subject) {
+		null -> 0
+		is Array<*> -> subject.size
+		is List<*> -> subject.size
+		is Map<*, *> -> subject.size
+		is Iterable<*> -> subject.count()
+		else -> subject.toString().length
 	}
 
 	fun toList(it: Any?): List<*> = toIterable(it).toList()
 
-	fun toIterable(it: Any?): Iterable<*> {
-		return when (it) {
-			null -> listOf<Any?>()
-			is Iterable<*> -> it
-			is CharSequence -> it.toList()
-			is Map<*, *> -> it.toList()
-			else -> listOf<Any?>()
-		}
+	fun toIterable(it: Any?): Iterable<*> = when (it) {
+		null -> listOf<Any?>()
+		is Iterable<*> -> it
+		is CharSequence -> it.toList()
+		is Map<*, *> -> it.toList()
+		else -> listOf<Any?>()
 	}
 
 	suspend fun accessAny(instance: Any?, key: Any?): Any? = when (instance) {
@@ -157,15 +147,13 @@ object Dynamic2 {
 		}
 	}
 
-	fun setAny(instance: Any?, key: Any?, value: Any?): Any? {
-		return when (instance) {
-			null -> null
-			is MutableMap<*, *> -> (instance as MutableMap<Any?, Any?>).set(key, value)
-			is MutableList<*> -> (instance as MutableList<Any?>)[toInt(key)] = value
-			else -> {
-				//setField(instance, key.toString(), value)
-				Unit // @TODO!
-			}
+	fun setAny(instance: Any?, key: Any?, value: Any?): Any? = when (instance) {
+		null -> null
+		is MutableMap<*, *> -> (instance as MutableMap<Any?, Any?>).set(key, value)
+		is MutableList<*> -> (instance as MutableList<Any?>)[toInt(key)] = value
+		else -> {
+			//setField(instance, key.toString(), value)
+			Unit // @TODO!
 		}
 	}
 

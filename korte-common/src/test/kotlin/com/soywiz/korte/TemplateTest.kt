@@ -68,7 +68,6 @@ class TemplateTest : BaseTest() {
 		assertEquals("false", Template("{% if cond %}true{% else %}false{% end %}")("cond" to 0))
 		assertEquals("true", Template("{% if cond %}true{% end %}")("cond" to 1))
 		assertEquals("", Template("{% if cond %}true{% end %}")("cond" to 0))
-
 	}
 
 	@Test
