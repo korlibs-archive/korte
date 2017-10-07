@@ -5,11 +5,4 @@ dependencies {
     testImplementation project(":korte-common")
 
     compile "com.soywiz:korio-js:$korVersion"
-
-    compile libraries.kotlin_stdlib_js
-    testCompile libraries.kotlin_test_js
-}
-
-kotlin {
-    experimental { coroutines 'enable' }
 }
