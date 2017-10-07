@@ -40,10 +40,10 @@ interface ExprNode {
 			val obj = expr.eval(context)
 			val key = name.eval(context)
 			return try {
-				obj.dynamicGet(key)
+				obj.dynamicGet(key, context.mapper)
 			} catch (t: Throwable) {
 				try {
-					obj.dynamicCallMethod(key)
+					obj.dynamicCallMethod(key, mapper = context.mapper)
 				} catch (t: Throwable) {
 					null
 				}
@@ -65,7 +65,7 @@ interface ExprNode {
 							return k.invoke(context, processedArgs)
 						}
 					}
-					return obj.dynamicCallMethod(methodName, processedArgs.toTypedArray())
+					return obj.dynamicCallMethod(methodName, processedArgs.toTypedArray(), mapper = context.mapper)
 				}
 				is ExprNode.VAR -> {
 					val func = context.config.functions[method.name]
@@ -74,7 +74,7 @@ interface ExprNode {
 					}
 				}
 			}
-			return method.eval(context).dynamicCall(processedArgs.toTypedArray())
+			return method.eval(context).dynamicCall(processedArgs.toTypedArray(), mapper = context.mapper)
 		}
 	}
 

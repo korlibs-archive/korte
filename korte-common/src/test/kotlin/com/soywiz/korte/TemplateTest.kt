@@ -2,11 +2,22 @@ package com.soywiz.korte
 
 import com.soywiz.korio.async.executeInWorker
 import com.soywiz.korio.async.syncTest
+import com.soywiz.korio.lang.asyncCaptureStdout
+import com.soywiz.korio.reflect.AsyncFun
+import com.soywiz.korio.reflect.ClassReflect
+import com.soywiz.korio.reflect.ObjectMapper2
+import com.soywiz.korio.reflect.Reflect
 import com.soywiz.korio.vfs.MemoryVfsMix
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class TemplateTest : BaseTest() {
+	@Reflect
+	data class Person(val name: String, val surname: String)
+
+	val mapper = ObjectMapper2()
+		.register(ClassReflect(Person::class, listOf(Person::name, Person::surname), listOf(String::class, String::class)) { Person(get(0), get(1)) })
+
 	@Test
 	fun testDummy() = syncTest {
 		assertEquals("hello", (Template("hello"))(null))
@@ -104,9 +115,9 @@ class TemplateTest : BaseTest() {
 
 	@Test
 	fun testForAccess() = syncTest {
-		assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n.surname }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros"))))
-		assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n['sur'+'name'] }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros"))))
-		assertEquals("ZardBallesteros", Template("{% for nin in persons %}{{ nin['sur'+'name'] }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros"))))
+		assertEquals(":Zard:Ballesteros", Template("{% for n in persons %}:{{ n.surname }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros")), mapper = mapper))
+		assertEquals("ZardBallesteros", Template("{% for n in persons %}{{ n['sur'+'name'] }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros")), mapper = mapper))
+		assertEquals("ZardBallesteros", Template("{% for nin in persons %}{{ nin['sur'+'name'] }}{% end %}")("persons" to listOf(Person("Soywiz", "Zard"), Person("Carlos", "Ballesteros")), mapper = mapper))
 	}
 
 	@Test
@@ -166,11 +177,16 @@ class TemplateTest : BaseTest() {
 	fun testAccessGetter() = syncTest {
 		val success = "success!"
 
+		@Reflect
 		class Test1 {
 			val a: String get() = success
 		}
 
-		assertEquals(success, Template("{{ test.a }}")("test" to Test1()))
+		val mapper = ObjectMapper2().register(
+			ClassReflect(Test1::class, listOf(Test1::a), listOf(String::class)) { Test1() }
+		)
+
+		assertEquals(success, Template("{{ test.a }}")("test" to Test1(), mapper = mapper))
 	}
 
 	@Test
@@ -284,13 +300,18 @@ class TemplateTest : BaseTest() {
 	@Test
 	fun testSuspendClass() = syncTest {
 		class Test {
-			suspend fun a(): Int {
+			suspend fun mytest123(): Int {
 				val r = executeInWorker { 1 }
 				return r + 7
 			}
 		}
 
-		assertEquals("""8""", Template("{{ v.a }}")("v" to Test()))
+		mapper.register(ClassReflect(Test::class, smethods = listOf(AsyncFun("mytest123", {
+			//println("***********************")
+			mytest123()
+		}))))
+
+		assertEquals("""8""", Template("{{ v.mytest123 }}")("v" to Test(), mapper = mapper))
 	}
 
 	//@Test fun testStringInterpolation() = sync {
@@ -311,8 +332,6 @@ class TemplateTest : BaseTest() {
 	fun testMissingFilterName() = syncTest {
 		expectException<Throwable>("Missing filter name") { Template("{{ 'a'| }}")() }
 	}
-
-	data class Person(val name: String, val surname: String)
 
 	@Test
 	fun testImportMacros() = syncTest {

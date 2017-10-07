@@ -1,6 +1,8 @@
 package com.soywiz.korte
 
 import com.soywiz.korio.lang.toByteArray
+import com.soywiz.korio.reflect.Mapper2
+import com.soywiz.korio.reflect.ObjectMapper2
 import com.soywiz.korio.stream.openAsync
 import com.soywiz.korio.util.Extra
 import com.soywiz.korio.vfs.MemoryVfs
@@ -39,13 +41,13 @@ class Template internal constructor(
 		val templates: Templates get() = template.templates
 	}
 
-	class Scope(val map: Any?, val parent: Template.Scope? = null) {
+	class Scope(val map: Any?, val mapper: ObjectMapper2, val parent: Template.Scope? = null) {
 		// operator
-		suspend fun get(key: Any?): Any? = map.dynamicGet(key) ?: parent?.get(key)
+		suspend fun get(key: Any?): Any? = map.dynamicGet(key, mapper) ?: parent?.get(key)
 
 		// operator
 		suspend fun set(key: Any?, value: Any?): Unit {
-			map.dynamicSet(key, value)
+			map.dynamicSet(key, value, mapper)
 		}
 	}
 
@@ -95,19 +97,19 @@ class Template internal constructor(
 		fun getBlockOrNull(name: String): BlockInTemplateEval? = template.blocks[name]?.let { BlockInTemplateEval(name, it, this@TemplateEvalContext) } ?: parent?.getBlockOrNull(name)
 		fun getBlock(name: String): BlockInTemplateEval = getBlockOrNull(name) ?: BlockInTemplateEval(name, DefaultBlocks.BlockText(""), this)
 
-		suspend fun exec(args: Any?): ExecResult {
+		suspend fun exec(args: Any?, mapper: ObjectMapper2 = Mapper2): ExecResult {
 			val str = StringBuilder()
-			val scope = Scope(args)
+			val scope = Scope(args, mapper)
 			if (template.frontMatter != null) for ((k, v) in template.frontMatter!!) scope.set(k, v)
-			val context = Template.EvalContext(this, scope, template.config, write = { str.append(it) })
+			val context = Template.EvalContext(this, scope, template.config, mapper, write = { str.append(it) })
 			eval(context)
 			return ExecResult(context, str.toString())
 		}
 
-		suspend fun exec(vararg args: Pair<String, Any?>): ExecResult = exec(hashMapOf(*args))
+		suspend fun exec(vararg args: Pair<String, Any?>, mapper: ObjectMapper2 = Mapper2): ExecResult = exec(hashMapOf(*args), mapper)
 
-		operator suspend fun invoke(args: Any?): String = exec(args).str
-		operator suspend fun invoke(vararg args: Pair<String, Any?>): String = exec(hashMapOf(*args)).str
+		operator suspend fun invoke(args: Any?, mapper: ObjectMapper2 = Mapper2): String = exec(args, mapper).str
+		operator suspend fun invoke(vararg args: Pair<String, Any?>, mapper: ObjectMapper2 = Mapper2): String = exec(hashMapOf(*args), mapper).str
 
 		suspend fun eval(context: Template.EvalContext) {
 			try {
@@ -125,6 +127,7 @@ class Template internal constructor(
 		var currentTemplate: TemplateEvalContext,
 		var scope: Template.Scope,
 		val config: TemplateConfig,
+		val mapper: ObjectMapper2,
 		var write: (str: String) -> Unit
 	) {
 		val leafTemplate: TemplateEvalContext = currentTemplate
@@ -159,7 +162,7 @@ class Template internal constructor(
 		inline fun <T> createScope(callback: () -> T): T {
 			val old = this.scope
 			try {
-				this.scope = Template.Scope(hashMapOf<Any?, Any?>(), old)
+				this.scope = Template.Scope(hashMapOf<Any?, Any?>(), mapper, old)
 				return callback()
 			} finally {
 				this.scope = old
@@ -171,8 +174,8 @@ class Template internal constructor(
 		blocks[name] = body
 	}
 
-	suspend operator fun invoke(hashMap: Any?): String = Template.TemplateEvalContext(this).invoke(hashMap)
-	suspend operator fun invoke(vararg args: Pair<String, Any?>): String = Template.TemplateEvalContext(this).invoke(*args)
+	suspend operator fun invoke(hashMap: Any?, mapper: ObjectMapper2 = Mapper2): String = Template.TemplateEvalContext(this).invoke(hashMap, mapper = mapper)
+	suspend operator fun invoke(vararg args: Pair<String, Any?>, mapper: ObjectMapper2 = Mapper2): String = Template.TemplateEvalContext(this).invoke(*args, mapper = mapper)
 }
 
 suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template {
