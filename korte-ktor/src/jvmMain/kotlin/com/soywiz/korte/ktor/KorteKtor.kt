@@ -33,6 +33,8 @@ class Korte(private val config: Configuration) {
     }
 
     companion object Feature : ApplicationFeature<ApplicationCallPipeline, Configuration, Korte> {
+        val VERSION get() = com.soywiz.korte.Korte.VERSION
+
         override val key: AttributeKey<Korte> = AttributeKey("korte")
 
         override fun install(pipeline: ApplicationCallPipeline, configure: Configuration.() -> Unit): Korte {
