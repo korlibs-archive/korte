@@ -46,8 +46,12 @@ object DefaultFilters {
     val Format = Filter("format") {
         subject.toDynamicString().format(*(args.toTypedArray() as Array<out Any>))
     }
+    // EXTRA from Kotlin
+    val Chunked = Filter("chunked") {
+        subject.toDynamicList().chunked(args[0].toDynamicInt())
+    }
 
     val ALL = listOf(
-        Capitalize, Join, Length, Lower, Quote, Raw, Reverse, Slice, Sort, Trim, Upper, Merge, JsonEncode, Format
+        Capitalize, Join, Length, Lower, Quote, Raw, Reverse, Slice, Sort, Trim, Upper, Merge, JsonEncode, Format, Chunked
     )
 }

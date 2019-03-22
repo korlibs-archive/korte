@@ -17,6 +17,11 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testChunked() = suspendTest {
+        assertEquals("[[1, 2], [3, 4], [5]]", (Template("{{ [1, 2, 3, 4, 5]|chunked(2) }}"))(null))
+    }
+
+    @Test
     fun testSimple() = suspendTest {
         assertEquals("hello soywiz", Template("hello {{ name }}")("name" to "soywiz"))
         assertEquals("soywizsoywiz", Template("{{name}}{{ name }}")("name" to "soywiz"))
