@@ -215,7 +215,7 @@ class Template internal constructor(
         return createEvalContext().withArgs(HashMap(args.toMap()), mapper)
     }
 
-    suspend fun prender(args: Map<String, Any?>, mapper: ObjectMapper2 = Mapper2): AsyncTextWriterContainer {
+    suspend fun prender(args: Any?, mapper: ObjectMapper2 = Mapper2): AsyncTextWriterContainer {
         return createEvalContext().withArgs(args, mapper)
     }
 

@@ -3,11 +3,11 @@ package com.soywiz.korte
 import com.soywiz.kds.*
 import com.soywiz.korio.lang.*
 
-class TemplateConfig(
+open class TemplateConfig(
     extraTags: List<Tag> = listOf(),
     extraFilters: List<Filter> = listOf(),
     extraFunctions: List<TeFunction> = listOf(),
-    val charset: Charset = UTF8
+    var charset: Charset = UTF8
 ) : Extra by Extra.Mixin() {
     val integratedFunctions = DefaultFunctions.ALL
     val integratedFilters = DefaultFilters.ALL
@@ -31,4 +31,8 @@ class TemplateConfig(
     val functions = hashMapOf<String, TeFunction>().apply {
         for (func in allFunctions) this[func.name] = func
     }
+
+    fun register(vararg its: Tag) = this.apply { for (it in its) tags[it.name] = it }
+    fun register(vararg its: Filter) = this.apply { for (it in its) filters[it.name] = it }
+    fun register(vararg its: TeFunction) = this.apply { for (it in its) functions[it.name] = it }
 }
