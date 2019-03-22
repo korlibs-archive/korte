@@ -102,9 +102,46 @@ object DefaultTags {
 		DefaultBlocks.BlockSet(varname, expr)
 	}
 
+	val Switch = Tag("switch", setOf("case", "default"), setOf("endswitch")) {
+		var subject: ExprNode? = null
+		val cases = arrayListOf<Pair<ExprNode, Block>>()
+		var defaultCase: Block? = null
+
+		for (part in this.chunks) {
+			val tagContent = part.tag.content
+			val body = part.body
+			when (part.tag.name) {
+				"switch" -> {
+					subject = ExprNode.parse(tagContent)
+				}
+				"case" -> {
+					cases += ExprNode.parse(tagContent) to body
+				}
+				"default" -> {
+					defaultCase = body
+				}
+			}
+		}
+		if (subject == null) error("No subject set in switch")
+		//println(this.chunks)
+		object : Block {
+			override suspend fun eval(context: Template.EvalContext) {
+				val subjectValue = subject.eval(context)
+				for ((case, block) in cases) {
+					if (subjectValue == case.eval(context)) {
+						block.eval(context)
+						return
+					}
+				}
+				defaultCase?.eval(context)
+				return
+			}
+		}
+	}
+
 	val ALL = listOf(
 		BlockTag,
 		Capture, Debug,
-		Empty, Extends, For, If, Import, Include, Macro, Set
+		Empty, Extends, For, If, Switch, Import, Include, Macro, Set
 	)
 }

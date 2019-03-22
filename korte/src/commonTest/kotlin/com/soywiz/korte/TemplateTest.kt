@@ -23,6 +23,21 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testSwitch() = suspendTest {
+        val template = Template("""
+            {% switch value %}
+            {% case "a" %}1
+            {% case "b" %}2
+            {% default %}3
+            {% endswitch %}
+        """.trimIndent())
+        assertEquals("1", template(mapOf("value" to "a")).trim())
+        assertEquals("2", template(mapOf("value" to "b")).trim())
+        assertEquals("3", template(mapOf("value" to "c")).trim())
+        assertEquals("3", template(mapOf("value" to "d")).trim())
+    }
+
+    @Test
     fun testSimple() = suspendTest {
         assertEquals("hello soywiz", Template("hello {{ name }}")("name" to "soywiz"))
         assertEquals("soywizsoywiz", Template("{{name}}{{ name }}")("name" to "soywiz"))
