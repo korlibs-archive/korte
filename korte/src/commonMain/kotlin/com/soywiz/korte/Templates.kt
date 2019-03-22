@@ -4,26 +4,37 @@ import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korte.util.*
 
-class Templates(
-    val root: VfsFile,
-    val includes: VfsFile = root,
-    val layouts: VfsFile = root,
+open class Templates(
+    var root: VfsFile,
+    var includes: VfsFile = root,
+    var layouts: VfsFile = root,
     val config: TemplateConfig = TemplateConfig()
 ) {
-    val cache = AsyncCache()
+    var cache = true
 
-    suspend fun getInclude(name: String): Template = cache("include/$name") {
+    @PublishedApi
+    internal val tcache = AsyncCache()
+
+    @PublishedApi
+    internal suspend fun cache(name: String, callback: suspend () -> Template): Template {
+        return when {
+            cache -> tcache(name) { callback() }
+            else -> callback()
+        }
+    }
+
+    open suspend fun getInclude(name: String): Template = cache("include/$name") {
         val content = includes[name].readString()
         Template(name, this@Templates, content, config).init()
     }
 
-    suspend fun getLayout(name: String): Template = cache("layout/$name") {
-        val content = includes[name].readString()
+    open suspend fun getLayout(name: String): Template = cache("layout/$name") {
+        val content = layouts[name].readString()
         Template(name, this@Templates, content, config).init()
     }
 
     //suspend operator fun get(name: String): Template = cache(name) { // @TODO: Unsupported operator. Re-enable when this limitation is lifted.
-    suspend fun get(name: String): Template = cache(name) {
+    open suspend fun get(name: String): Template = cache(name) {
         val content = root[name].readString()
         Template(name, this@Templates, content, config).init()
     }

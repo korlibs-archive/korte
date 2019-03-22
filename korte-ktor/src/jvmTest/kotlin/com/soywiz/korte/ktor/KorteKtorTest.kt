@@ -17,11 +17,10 @@ class KorteKtorTest {
             withTestApplication {
                 application.apply {
                     install(Korte) {
-                        templateRoot(
-                            MemoryVfsMix(
-                                "demo.tpl" to "Hello {{ hello }}"
-                            )
-                        )
+                        cache(true)
+                        root(MemoryVfsMix(
+                            "demo.tpl" to "Hello {{ hello }}"
+                        ))
                     }
                     routing {
                         get("/") {

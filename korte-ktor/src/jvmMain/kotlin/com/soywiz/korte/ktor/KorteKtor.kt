@@ -1,6 +1,7 @@
 package com.soywiz.korte.ktor
 
 import com.soywiz.korio.file.*
+import com.soywiz.korio.file.std.*
 import com.soywiz.korte.*
 import io.ktor.application.*
 import io.ktor.http.*
@@ -18,9 +19,12 @@ class KorteContent(
 
 class Korte(private val config: Configuration) {
     class Configuration : TemplateConfig() {
-        var templateLoader: suspend (String) -> String = { it }
-        fun templateRoot(root: VfsFile) {
-            templateLoader = { root[it].readString() }
+        var templates = Templates(MemoryVfs(), config = this)
+        fun cache(value: Boolean) = this.apply { templates.cache = value }
+        fun root(root: VfsFile, includes: VfsFile = root, layouts: VfsFile = root) = this.apply {
+            templates.root = root
+            templates.includes = includes
+            templates.layouts = layouts
         }
     }
 
@@ -42,7 +46,7 @@ class Korte(private val config: Configuration) {
 
     private suspend fun process(content: KorteContent): KorteOutgoingContent {
         return KorteOutgoingContent(
-            Template(config.templateLoader(content.template), config),
+            config.templates.get(content.template),
             content.model,
             content.etag,
             content.contentType
