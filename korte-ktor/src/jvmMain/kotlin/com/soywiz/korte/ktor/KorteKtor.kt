@@ -17,6 +17,10 @@ class KorteContent(
     val contentType: ContentType = ContentType.Text.Html.withCharset(Charsets.UTF_8)
 )
 
+suspend fun ApplicationCall.respondKorte(template: String, model: Any? = null, etag: String? = null, contentType: ContentType = ContentType.Text.Html.withCharset(Charsets.UTF_8)) {
+    respond(KorteContent(template, model, etag, contentType))
+}
+
 class Korte(private val config: Configuration) {
     class Configuration : TemplateConfig() {
         var templates = Templates(MemoryVfs(), config = this)

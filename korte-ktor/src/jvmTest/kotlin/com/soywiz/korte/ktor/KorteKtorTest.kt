@@ -1,9 +1,9 @@
 package com.soywiz.korte.ktor
 
 import com.soywiz.korio.file.std.*
+import com.soywiz.korte.dynamic.*
 import io.ktor.application.*
 import io.ktor.http.*
-import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.*
@@ -13,18 +13,23 @@ import kotlin.test.*
 class KorteKtorTest {
     @Test
     fun test() {
+        class MyModel(val hello: String) : DynamicType<MyModel> by DynamicType({ register(MyModel::hello) })
+
         runBlocking {
             withTestApplication {
                 application.apply {
                     install(Korte) {
                         cache(true)
-                        root(MemoryVfsMix(
-                            "demo.tpl" to "Hello {{ hello }}"
-                        ))
+                        root(
+                            MemoryVfsMix(
+                                "demo.tpl" to "Hello {{ hello }}"
+                            )
+                        )
                     }
                     routing {
                         get("/") {
-                            call.respond(KorteContent("demo.tpl", mapOf("hello" to "world")))
+                            //call.respondKorte("demo.tpl", mapOf("hello" to "world"))
+                            call.respondKorte("demo.tpl", MyModel(hello = "world"))
                         }
                     }
                     assertEquals("Hello world", handleRequest(HttpMethod.Get, "/") { }.response.content)
