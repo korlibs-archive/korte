@@ -9,16 +9,7 @@ import kotlin.test.*
 class TemplateTest : BaseTest() {
     //@Reflect
     data class Person(val name: String, val surname: String)
-
-    /*
-    val mapper = ObjectMapper()
-        .register(
-            ClassReflect(
-                Person::class,
-                listOf(Person::name, Person::surname),
-                listOf(String::class, String::class)
-            ) { Person(get(0), get(1)) })
-    */
+        : DynamicType<Person> by DynamicType({ register(Person::name, Person::surname) })
 
     @Test
     fun testDummy() = suspendTest {
@@ -210,7 +201,7 @@ class TemplateTest : BaseTest() {
     fun testAccessGetter() = suspendTest {
         val success = "success!"
 
-        class Test1 {
+        class Test1 : DynamicType<Test1> by DynamicType({ register(Test1::a) }) {
             val a: String get() = success
         }
 
@@ -327,8 +318,9 @@ class TemplateTest : BaseTest() {
 
     @Test
     fun testSuspendClass() = suspendTest {
-        class Test {
+        class Test : DynamicType<Test> by DynamicType({ register("mytest123") { mytest123() } }) {
             suspend fun mytest123(): Int {
+            //fun mytest123(): Int {
                 //val r = executeInWorker { 1 }
                 var r = run { 1 }
                 return r + 7
