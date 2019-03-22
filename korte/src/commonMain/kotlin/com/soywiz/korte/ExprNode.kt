@@ -73,7 +73,7 @@ interface ExprNode : DynamicContext {
                             return k.invoke(context, processedArgs)
                         }
                     }
-                    return obj.dynamicCallMethod(methodName, processedArgs.toTypedArray(), mapper = context.mapper)
+                    return obj.dynamicCallMethod(methodName, *processedArgs.toTypedArray(), mapper = context.mapper)
                 }
                 is ExprNode.VAR -> {
                     val func = context.config.functions[method.name]

@@ -8,8 +8,8 @@ import kotlin.test.*
 
 class TemplateTest : BaseTest() {
     //@Reflect
-    data class Person(val name: String, val surname: String)
-        : DynamicType<Person> by DynamicType({ register(Person::name, Person::surname) })
+    data class Person(val name: String, val surname: String) :
+        DynamicType<Person> by DynamicType({ register(Person::name, Person::surname) })
 
     @Test
     fun testDummy() = suspendTest {
@@ -318,16 +318,27 @@ class TemplateTest : BaseTest() {
 
     @Test
     fun testSuspendClass() = suspendTest {
-        class Test : DynamicType<Test> by DynamicType({ register("mytest123") { mytest123() } }) {
+        class Test : DynamicType<Test> by DynamicType({
+            register("mytest123") { mytest123() }
+            register("sum") { sum(it[0].toDynamicInt(), it[1].toDynamicInt()) }
+        }), DynamicContext {
+            var field = 1
+
             suspend fun mytest123(): Int {
-            //fun mytest123(): Int {
+                //fun mytest123(): Int {
                 //val r = executeInWorker { 1 }
-                var r = run { 1 }
+                var r = run { field }
                 return r + 7
+            }
+
+            suspend fun sum(a: Int, b: Int): Int {
+                return a + b
             }
         }
 
         assertEquals("""8""", Template("{{ v.mytest123 }}")("v" to Test(), mapper = Mapper2))
+        assertEquals("""8""", Template("{{ v.mytest123() }}")("v" to Test(), mapper = Mapper2))
+        assertEquals("""8""", Template("{{ v.sum(3, 5) }}")("v" to Test(), mapper = Mapper2))
     }
 
     //@Test fun testStringInterpolation() = sync {
