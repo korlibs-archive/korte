@@ -4,6 +4,7 @@ import com.soywiz.korio.async.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korte.dynamic.*
+import kotlin.js.*
 import kotlin.test.*
 
 class TemplateTest : BaseTest() {
@@ -321,29 +322,38 @@ class TemplateTest : BaseTest() {
         )
     }
 
-    @Test
-    fun testSuspendClass() = suspendTest {
-        class Test : DynamicType<Test> by DynamicType({
-            register("mytest123") { mytest123() }
-            register("sum") { sum(it[0].toDynamicInt(), it[1].toDynamicInt()) }
-        }), DynamicContext {
-            var field = 1
+    class TestMethods : DynamicType<TestMethods> by DynamicType({
+        register("mytest123") { mytest123() }
+        register("sum") { sum(it[0].toDynamicInt(), it[1].toDynamicInt()) }
+    }), DynamicContext {
+        var field = 1
 
-            suspend fun mytest123(): Int {
-                //fun mytest123(): Int {
-                //val r = executeInWorker { 1 }
-                var r = run { field }
-                return r + 7
-            }
-
-            suspend fun sum(a: Int, b: Int): Int {
-                return a + b
-            }
+        suspend fun mytest123(): Int {
+            //fun mytest123(): Int {
+            //val r = executeInWorker { 1 }
+            var r = run { field }
+            return r + 7
         }
 
-        assertEquals("""8""", Template("{{ v.mytest123 }}")("v" to Test(), mapper = Mapper2))
-        assertEquals("""8""", Template("{{ v.mytest123() }}")("v" to Test(), mapper = Mapper2))
-        assertEquals("""8""", Template("{{ v.sum(3, 5) }}")("v" to Test(), mapper = Mapper2))
+        @JsName("sum")
+        suspend fun sum(a: Int, b: Int): Int {
+            return a + b
+        }
+    }
+
+    @Test
+    fun testSuspendClass1() = suspendTest {
+        assertEquals("""8""", Template("{{ v.mytest123 }}")("v" to TestMethods(), mapper = Mapper2))
+    }
+
+    @Test
+    fun testSuspendClass2() = suspendTest {
+        assertEquals("""8""", Template("{{ v.mytest123() }}")("v" to TestMethods(), mapper = Mapper2))
+    }
+
+    @Test
+    fun testSuspendClass3() = suspendTest {
+        assertEquals("""8""", Template("{{ v.sum(3, 5) }}")("v" to TestMethods(), mapper = Mapper2))
     }
 
     //@Test fun testStringInterpolation() = sync {

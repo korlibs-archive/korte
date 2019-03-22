@@ -13,20 +13,23 @@ open class JsObjectMapper2 : ObjectMapper2() {
         return jsTypeOf(instance.asDynamic()[key]) !== "undefined"
     }
 
-    override suspend fun invokeAsync(type: KClass<Any>, instance: Any?, key: String, args: List<Any?>): Any? = suspendCoroutine<Any?> { c ->
-        val function = instance.asDynamic()[key] ?: return@suspendCoroutine c.resume(null)
-        val arity: Int = function.length.unsafeCast<Int>()
-        val rargs = when {
-            args.size != arity -> args + listOf(c)
-            else -> args
-        }
-        try {
-            val result = function.apply(instance, rargs.toTypedArray())
-            if (result != kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED) {
-                c.resume(result)
+    override suspend fun invokeAsync(type: KClass<Any>, instance: Any?, key: String, args: List<Any?>): Any? {
+        val function = instance.asDynamic()[key] ?: return super.invokeAsync(type, instance, key, args)
+        //val function = instance.asDynamic()[key] ?: return null
+        return suspendCoroutine<Any?> { c ->
+            val arity: Int = function.length.unsafeCast<Int>()
+            val rargs = when {
+                args.size != arity -> args + listOf(c)
+                else -> args
             }
-        } catch (e: Throwable) {
-            c.resumeWithException(e)
+            try {
+                val result = function.apply(instance, rargs.toTypedArray())
+                if (result != kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED) {
+                    c.resume(result)
+                }
+            } catch (e: Throwable) {
+                c.resumeWithException(e)
+            }
         }
     }
 
