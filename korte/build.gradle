@@ -1,9 +1,10 @@
-apply plugin: 'kotlin-platform-jvm'
+apply plugin: com.soywiz.korlibs.KorlibsPluginNoNative
 
-dependencies {
-    implement project(":korte-common")
-    testImplementation project(":korte-common")
-
-    compile "com.soywiz:korio:$korVersion"
+korlibs {
+    exposeVersion()
+    dependencyMulti("com.soywiz:korio:$korioVersion")
+    dependencies {
+        jvmMainApi "org.jetbrains.kotlin:kotlin-reflect"
+        androidMainApi "org.jetbrains.kotlin:kotlin-reflect"
+    }
 }
-

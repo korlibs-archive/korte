@@ -1,0 +1,16 @@
+apply plugin: 'kotlin'
+
+dependencies {
+    compile project(":korte")
+    compile "com.soywiz:korio-ext-web:$korioVersion"
+}
+
+configurations {
+    provided
+}
+
+repositories {
+    mavenLocal()
+    jcenter()
+    mavenCentral()
+}

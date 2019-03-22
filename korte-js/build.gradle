@@ -1,8 +1,0 @@
-apply plugin: 'kotlin-platform-js'
-
-dependencies {
-    implement project(":korte-common")
-    testImplementation project(":korte-common")
-
-    compile "com.soywiz:korio-js:$korVersion"
-}
