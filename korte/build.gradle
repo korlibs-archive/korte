@@ -3,8 +3,4 @@ apply plugin: com.soywiz.korlibs.KorlibsPluginNoNative
 korlibs {
     exposeVersion()
     dependencyMulti("com.soywiz:korio:$korioVersion")
-    dependencies {
-        jvmMainApi "org.jetbrains.kotlin:kotlin-reflect"
-        androidMainApi "org.jetbrains.kotlin:kotlin-reflect"
-    }
 }
