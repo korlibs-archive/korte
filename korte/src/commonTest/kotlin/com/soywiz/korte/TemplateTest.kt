@@ -78,6 +78,13 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testForElse2() = suspendTest {
+        val tpl = Template("{% for n in numbers %}[{{ n }}]{% else %}none{% end %}")
+        assertEquals("[1][2][3]", tpl("numbers" to listOf(1, 2, 3)))
+        assertEquals("none", tpl("numbers" to listOf<Int>()))
+    }
+
+    @Test
     fun testDebug() = suspendTest {
         var result: String? = null
         var stdout = ""
