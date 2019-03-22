@@ -4,8 +4,9 @@ import com.soywiz.kds.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.util.*
 import com.soywiz.korte.dynamic.*
+import com.soywiz.korte.internal.*
 
-interface ExprNode {
+interface ExprNode : DynamicContext {
     suspend fun eval(context: Template.EvalContext): Any?
 
     data class VAR(val name: String) : ExprNode {
@@ -33,7 +34,12 @@ interface ExprNode {
     data class FILTER(val name: String, val expr: ExprNode, val params: List<ExprNode>) : ExprNode {
         override suspend fun eval(context: Template.EvalContext): Any? {
             val filter = context.config.filters[name] ?: invalidOp("Unknown filter '$name'")
-            return filter.eval(expr.eval(context), params.map { it.eval(context) }, context)
+            return context.filterCtxPool.alloc2 {
+                it.context = context
+                it.subject = expr.eval(context)
+                it.args = params.map { it.eval(context) }
+                filter.eval(it)
+            }
         }
     }
 

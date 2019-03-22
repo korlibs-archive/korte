@@ -3,8 +3,9 @@ package com.soywiz.korte
 import com.soywiz.kds.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.serialization.yaml.*
+import com.soywiz.korte.dynamic.*
 
-interface Block {
+interface Block : DynamicContext {
     suspend fun eval(context: Template.EvalContext)
 
     companion object {

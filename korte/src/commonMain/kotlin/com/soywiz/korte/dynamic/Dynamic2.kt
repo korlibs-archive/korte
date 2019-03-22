@@ -14,7 +14,7 @@ import kotlin.reflect.*
 //	fun dynamicSet(obj: Any?, name: String, value: Any?): Unit
 //}
 
-object Dynamic2 {
+object Dynamic2 : DynamicContext {
     fun binop(l: Any?, r: Any?, op: String): Any? = when (op) {
         "+" -> {
             when (l) {
@@ -203,19 +203,23 @@ object Dynamic2 {
     //fun dynamicCast(any: Any?, target: KClass<*>): Any? = TODO()
 }
 
-internal fun Any?.toDynamicString() = Dynamic2.toString(this)
-internal fun Any?.toDynamicBool() = Dynamic2.toBool(this)
-internal fun Any?.toDynamicInt() = Dynamic2.toInt(this)
-internal fun Any?.toDynamicList() = Dynamic2.toList(this)
-internal fun Any?.dynamicLength() = Dynamic2.length(this)
-suspend internal fun Any?.dynamicGet(key: Any?, mapper: ObjectMapper2) = Dynamic2.accessAny(this, key, mapper)
-suspend internal fun Any?.dynamicSet(key: Any?, value: Any?, mapper: ObjectMapper2) =
-    Dynamic2.setAny(this, key, value, mapper)
+interface DynamicContext {
+    fun Any?.toDynamicString() = Dynamic2.toString(this)
+    fun Any?.toDynamicBool() = Dynamic2.toBool(this)
+    fun Any?.toDynamicInt() = Dynamic2.toInt(this)
+    fun Any?.toDynamicList() = Dynamic2.toList(this)
+    fun Any?.dynamicLength() = Dynamic2.length(this)
+    suspend fun Any?.dynamicGet(key: Any?, mapper: ObjectMapper2) = Dynamic2.accessAny(this, key, mapper)
+    suspend fun Any?.dynamicSet(key: Any?, value: Any?, mapper: ObjectMapper2) =
+        Dynamic2.setAny(this, key, value, mapper)
 
-suspend internal fun Any?.dynamicCall(vararg args: Any?, mapper: ObjectMapper2) =
-    Dynamic2.callAny(this, args.toList(), mapper = mapper)
+    suspend fun Any?.dynamicCall(vararg args: Any?, mapper: ObjectMapper2) =
+        Dynamic2.callAny(this, args.toList(), mapper = mapper)
 
-suspend internal fun Any?.dynamicCallMethod(methodName: Any?, vararg args: Any?, mapper: ObjectMapper2) =
-    Dynamic2.callAny(this, methodName, args.toList(), mapper = mapper)
+    suspend fun Any?.dynamicCallMethod(methodName: Any?, vararg args: Any?, mapper: ObjectMapper2) =
+        Dynamic2.callAny(this, methodName, args.toList(), mapper = mapper)
 //suspend internal fun Any?.dynamicCastTo(target: KClass<*>) = Dynamic2.dynamicCast(this, target)
 
+}
+
+inline fun <T> DynamicContext(callback: DynamicContext.() -> T): T = callback(Dynamic2)

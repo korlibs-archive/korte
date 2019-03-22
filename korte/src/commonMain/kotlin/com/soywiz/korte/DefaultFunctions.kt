@@ -5,13 +5,13 @@ import com.soywiz.korte.dynamic.*
 
 @Suppress("unused")
 object DefaultFunctions {
-    val Cycle = TeFunction("cycle") { args, _ ->
+    val Cycle = TeFunction("cycle") { args ->
         val list = args.getOrNull(0).toDynamicList()
         val index = args.getOrNull(1).toDynamicInt()
         list[index umod list.size]
     }
 
-    val Range = TeFunction("range") { args, _ ->
+    val Range = TeFunction("range") { args ->
         val left = args.getOrNull(0)
         val right = args.getOrNull(1)
         val step = (args.getOrNull(2) ?: 1).toDynamicInt()
@@ -25,13 +25,13 @@ object DefaultFunctions {
     }
 
 
-    val Parent = TeFunction("parent") { _, ctx ->
+    val Parent = TeFunction("parent") {
         //ctx.tempDropTemplate {
-        val blockName = ctx.currentBlock?.name
+        val blockName = currentBlock?.name
 
         if (blockName != null) {
-            ctx.captureRaw {
-                ctx.currentBlock?.parent?.eval(ctx)
+            captureRaw {
+                currentBlock?.parent?.eval(this)
             }
         } else {
             ""

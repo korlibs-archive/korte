@@ -4,22 +4,21 @@ import com.soywiz.kmem.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korio.serialization.json.*
 import com.soywiz.korio.util.*
-import com.soywiz.korte.dynamic.*
 
 @Suppress("unused")
 object DefaultFilters {
-    val Capitalize = Filter("capitalize") { subject, _, _ -> subject.toDynamicString().toLowerCase().capitalize() }
-    val Join = Filter("join") { subject, args, _ ->
-        subject.toDynamicList().map { it.toDynamicString() }.joinToString(args[0].toDynamicString())
+    val Capitalize = Filter("capitalize") { subject.toDynamicString().toLowerCase().capitalize() }
+    val Join = Filter("join") {
+        subject.toDynamicList().joinToString(args[0].toDynamicString()) { it.toDynamicString() }
     }
-    val Length = Filter("length") { subject, _, _ -> subject.dynamicLength() }
-    val Lower = Filter("lower") { subject, _, _ -> subject.toDynamicString().toLowerCase() }
-    val Quote = Filter("quote") { subject, _, _ -> subject.toDynamicString().quote() }
-    val Raw = Filter("raw") { subject, _, _ -> RawString(subject.toDynamicString()) }
+    val Length = Filter("length") { subject.dynamicLength() }
+    val Lower = Filter("lower") { subject.toDynamicString().toLowerCase() }
+    val Quote = Filter("quote") { subject.toDynamicString().quote() }
+    val Raw = Filter("raw") { RawString(subject.toDynamicString()) }
     val Reverse =
-        Filter("reverse") { subject, _, _ -> (subject as? String)?.reversed() ?: subject.toDynamicList().reversed() }
+        Filter("reverse") { (subject as? String)?.reversed() ?: subject.toDynamicList().reversed() }
 
-    val Slice = Filter("slice") { subject, args, _ ->
+    val Slice = Filter("slice") {
         val lengthArg = args.getOrNull(1)
         val start = args.getOrNull(0).toDynamicInt()
         val length = lengthArg?.toDynamicInt() ?: subject.dynamicLength()
@@ -32,19 +31,19 @@ object DefaultFilters {
         }
     }
 
-    val Sort = Filter("sort") { subject, _, _ ->
+    val Sort = Filter("sort") {
         subject.toDynamicList().sortedBy { it.toDynamicString() }
     }
-    val Trim = Filter("trim") { subject, _, _ -> subject.toDynamicString().trim() }
-    val Upper = Filter("upper") { subject, _, _ -> subject.toDynamicString().toUpperCase() }
-    val Merge = Filter("merge") { subject, args, _ ->
+    val Trim = Filter("trim") { subject.toDynamicString().trim() }
+    val Upper = Filter("upper") { subject.toDynamicString().toUpperCase() }
+    val Merge = Filter("merge") {
         val arg = args.getOrNull(0)
         subject.toDynamicList() + arg.toDynamicList()
     }
-    val JsonEncode = Filter("json_encode") { subject, _, _ ->
+    val JsonEncode = Filter("json_encode") {
         Json.stringify(subject)
     }
-    val Format = Filter("format") { subject, args, _ ->
+    val Format = Filter("format") {
         subject.toDynamicString().format(*(args.toTypedArray() as Array<out Any>))
     }
 

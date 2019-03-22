@@ -43,7 +43,7 @@ class Template internal constructor(
         val templates: Templates get() = template.templates
     }
 
-    class Scope(val map: Any?, val mapper: ObjectMapper2, val parent: Template.Scope? = null) {
+    class Scope(val map: Any?, val mapper: ObjectMapper2, val parent: Template.Scope? = null) : DynamicContext {
         // operator
         suspend fun get(key: Any?): Any? = map.dynamicGet(key, mapper) ?: parent?.get(key)
 
@@ -154,11 +154,13 @@ class Template internal constructor(
         val config: TemplateConfig,
         val mapper: ObjectMapper2,
         var write: suspend (str: String) -> Unit
-    ) {
+    ) : DynamicContext {
         val leafTemplate: TemplateEvalContext = currentTemplate
         val templates = currentTemplate.templates
         val macros = hashMapOf<String, Macro>()
         var currentBlock: BlockInTemplateEval? = null
+
+        val filterCtxPool = Pool { Filter.Ctx() }
 
         inline fun <T> setTempTemplate(template: TemplateEvalContext, callback: () -> T): T {
             val oldTemplate = this.currentTemplate

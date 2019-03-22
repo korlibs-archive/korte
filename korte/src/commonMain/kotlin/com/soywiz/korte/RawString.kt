@@ -7,10 +7,8 @@ class RawString(val str: String) {
 	override fun toString(): String = str
 }
 
-fun Any?.toEscapedString(): String {
-	return if (this is RawString) {
-		this.str
-	} else {
-		this.toDynamicString().htmlspecialchars()
-	}
+fun Any?.toEscapedString(): String = when (this) {
+	is RawString -> this.str
+	//else -> DynamicContext { this.toDynamicString().htmlspecialchars() }
+	else -> Dynamic2.toString(this).htmlspecialchars()
 }
