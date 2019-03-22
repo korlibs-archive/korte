@@ -4,6 +4,7 @@ import com.soywiz.korlibs.*
 import org.gradle.api.*
 
 fun Project.configureTargetAndroid() {
+    //println("configureTargetAndroid: ${project.name} = korlibs.hasAndroid=${korlibs.hasAndroid}, korlibs.project.name=${korlibs.project.name}")
     if (korlibs.hasAndroid) {
         plugins.apply("com.android.library")
         extensions.getByType(com.android.build.gradle.LibraryExtension::class.java).apply {

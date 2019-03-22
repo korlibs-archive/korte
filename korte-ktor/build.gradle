@@ -1,4 +1,4 @@
-apply plugin: com.soywiz.korlibs.KorlibsPluginNoNative
+apply plugin: com.soywiz.korlibs.KorlibsPluginNoNativeNoAndroid
 //apply plugin: com.soywiz.korlibs.KorlibsPlugin
 
 korlibs {
