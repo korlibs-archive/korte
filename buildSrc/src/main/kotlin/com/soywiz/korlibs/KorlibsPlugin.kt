@@ -56,7 +56,8 @@ class KorlibsExtension(val project: Project, val nativeEnabled: Boolean) {
     }
 
     val ALL_NATIVE_TARGETS = if (nativeEnabled) listOf("iosArm64", "iosArm32", "iosX64", "linuxX64", "macosX64", "mingwX64") else listOf()
-    val ALL_TARGETS = listOf("android", "js", "jvm", "metadata") + ALL_NATIVE_TARGETS
+    val ALL_ANDROID_TARGETS = if (hasAndroid) listOf("android") else listOf()
+    val ALL_TARGETS = ALL_ANDROID_TARGETS + listOf("js", "jvm", "metadata") + ALL_NATIVE_TARGETS
 
     @JvmOverloads
     fun dependencyMulti(group: String, name: String, version: String, targets: List<String> = ALL_TARGETS, suffixCommonRename: Boolean = false, androidIsJvm: Boolean = false) = project {

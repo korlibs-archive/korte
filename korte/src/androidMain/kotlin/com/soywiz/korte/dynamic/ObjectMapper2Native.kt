@@ -5,6 +5,10 @@ import com.soywiz.korio.async.*
 import com.soywiz.korio.util.*
 import java.lang.reflect.*
 import kotlin.reflect.*
+import kotlinx.coroutines.*
+import java.lang.reflect.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 open class JvmObjectMapper2 : ObjectMapper2() {
     class ClassReflectCache<T : Any>(val clazz: KClass<T>) {
@@ -42,6 +46,43 @@ open class JvmObjectMapper2 : ObjectMapper2() {
     override suspend fun get(instance: Any, key: Any?): Any? {
         val prop = instance::class.classInfo.propByName[key] ?: return null
         return prop.getter?.invoke(instance)
+    }
+
+
+    private suspend fun Method.invokeSuspend(obj: Any?, args: List<Any?>): Any? {
+        val method = this@invokeSuspend
+        val cc = coroutineContext
+
+        val lastParam = method.parameterTypes.lastOrNull()
+        val margs = java.util.ArrayList(args)
+        var deferred: CompletableDeferred<Any?>? = null
+
+        if (lastParam != null && lastParam.isAssignableFrom(Continuation::class.java)) {
+            deferred = CompletableDeferred<Any?>(Job())
+            margs += deferred.toContinuation(cc)
+        }
+        val result = method.invoke(obj, *margs.toTypedArray())
+        return if (result == COROUTINE_SUSPENDED) {
+            deferred?.await()
+        } else {
+            result
+        }
+    }
+
+    private fun <T> CompletableDeferred<T>.toContinuation(context: CoroutineContext, job: Job? = null): Continuation<T> {
+        val deferred = CompletableDeferred<T>(job)
+        return object : Continuation<T> {
+            override val context: CoroutineContext = context
+
+            override fun resumeWith(result: Result<T>) {
+                val exception = result.exceptionOrNull()
+                if (exception != null) {
+                    deferred.completeExceptionally(exception)
+                } else {
+                    deferred.complete(result.getOrThrow())
+                }
+            }
+        }
     }
 }
 
