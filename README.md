@@ -19,9 +19,10 @@ It allows to call suspend methods from within templates.
 
 * <https://korlibs.soywiz.com/korte/>
 
-## Live demo (old version)
+## Live demo
 
-* <https://korlibs.github.io/kor_samples/korte1/>
+* ACE: <https://korlibs.github.io/korte-samples/korte-sample-browser/web/>
+* OLD: <https://korlibs.github.io/kor_samples/korte1/>
 
 ## Example
 
