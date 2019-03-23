@@ -22,3 +22,39 @@ It allows to call suspend methods from within templates.
 ## Live demo (old version)
 
 * <https://korlibs.github.io/kor_samples/korte1/>
+
+## Example
+
+### `_base.html```
+```liquid
+<html><head></head><body>
+{% block content %}default content{% endblock %}
+</body></html>
+```
+
+### `_two_columns.html```
+```liquid
+{% extends "_base.html" %}
+{% block content %}
+    <div>{% block left %}default left column{% endblock %}</div>
+    <div>{% block right %}default right column{% endblock %}</div>
+{% endblock %}
+```
+
+### `index.html```
+```liquid
+{% extends "_two_columns.html" %}
+{% block left %}
+    My left column. Hello {{ name|upper }}
+{% endblock %}
+{% block right %}
+    My prefix {{ parent() }} with additional content
+{% endblock %}
+```
+
+### `code.kt`
+
+```kotlin
+val templates = Templates(resourcesVfs)
+println(templates.render("index.html", mapOf("name" to "world")))
+```
