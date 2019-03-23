@@ -50,14 +50,17 @@ class Korte(private val config: Configuration) {
         }
     }
 
-    private suspend fun process(content: KorteContent): KorteOutgoingContent {
-        return KorteOutgoingContent(
-            config.templates.get(content.template),
-            content.model,
-            content.etag,
-            content.contentType
-        )
+    private suspend fun process(content: KorteContent): OutgoingContent {
+        return TextContent(config.templates.render(content.template, content.model), content.contentType)
     }
+
+    /*
+    private suspend fun process(content: KorteContent): OutgoingContent = KorteOutgoingContent(
+        config.templates.get(content.template),
+        content.model,
+        content.etag,
+        content.contentType
+    )
 
     private class KorteOutgoingContent(
         val template: Template,
@@ -74,4 +77,5 @@ class Korte(private val config: Configuration) {
                 versions += EntityTagVersion(etag)
         }
     }
+    */
 }

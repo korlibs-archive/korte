@@ -43,15 +43,15 @@ open class Templates(
         return get(name).invoke(*args)
     }
 
-    suspend fun render(name: String, args: Map<String, Any?>): String {
-        return get(name).invoke(HashMap(args))
+    suspend fun render(name: String, args: Any?): String {
+        return get(name).invoke(args)
     }
 
     suspend fun prender(name: String, vararg args: Pair<String, Any?>): AsyncTextWriterContainer {
         return get(name).prender(*args)
     }
 
-    suspend fun prender(name: String, args: Map<String, Any?>): AsyncTextWriterContainer {
+    suspend fun prender(name: String, args: Any?): AsyncTextWriterContainer {
         return get(name).prender(args)
     }
 }
