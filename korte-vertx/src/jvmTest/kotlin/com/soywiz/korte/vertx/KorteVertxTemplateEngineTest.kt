@@ -3,7 +3,6 @@ package com.soywiz.korte.vertx
 import com.soywiz.korio.file.std.*
 import com.soywiz.korte.*
 import com.soywiz.korte.vertx.internal.*
-import com.soywiz.korte.vertx.util.*
 import io.vertx.core.*
 import io.vertx.core.http.*
 import io.vertx.ext.web.*

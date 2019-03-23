@@ -4,7 +4,7 @@ import io.vertx.core.buffer.*
 import io.vertx.core.http.*
 import kotlinx.coroutines.*
 
-suspend fun HttpClientRequest.readString(): String {
+internal suspend fun HttpClientRequest.readString(): String {
     val data = Buffer.buffer()
     val completed = CompletableDeferred<Unit>()
     handler {
