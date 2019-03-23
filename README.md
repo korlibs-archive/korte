@@ -25,14 +25,14 @@ It allows to call suspend methods from within templates.
 
 ## Example
 
-### `_base.html```
+### `_base.html`
 ```liquid
 <html><head></head><body>
 {% block content %}default content{% endblock %}
 </body></html>
 ```
 
-### `_two_columns.html```
+### `_two_columns.html`
 ```liquid
 {% extends "_base.html" %}
 {% block content %}
@@ -41,7 +41,7 @@ It allows to call suspend methods from within templates.
 {% endblock %}
 ```
 
-### `index.html```
+### `index.html`
 ```liquid
 {% extends "_two_columns.html" %}
 {% block left %}
