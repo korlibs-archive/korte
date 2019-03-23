@@ -3,6 +3,8 @@ package com.soywiz.korte
 import com.soywiz.korio.async.*
 import com.soywiz.korio.file.*
 import com.soywiz.korte.util.*
+import kotlinx.coroutines.*
+import kotlin.coroutines.*
 
 open class Templates(
     var root: VfsFile,
@@ -11,8 +13,26 @@ open class Templates(
     val config: TemplateConfig = TemplateConfig(),
     var cache: Boolean = true
 ) {
+    internal class AsyncCache {
+        @PublishedApi
+        internal val promises = LinkedHashMap<String, Deferred<*>>()
+
+        fun invalidateAll() {
+            promises.clear()
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        suspend operator fun <T> invoke(key: String, gen: suspend () -> T): T {
+            return (promises.getOrPut(key) { asyncImmediately(coroutineContext) { gen() } } as Deferred<T>).await()
+        }
+    }
+
     @PublishedApi
     internal val tcache = AsyncCache()
+
+    fun invalidateCache() {
+        tcache.invalidateAll()
+    }
 
     @PublishedApi
     internal suspend fun cache(name: String, callback: suspend () -> Template): Template {

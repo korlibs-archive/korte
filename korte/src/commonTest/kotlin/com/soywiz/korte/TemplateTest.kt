@@ -4,6 +4,7 @@ import com.soywiz.korio.async.*
 import com.soywiz.korio.file.std.*
 import com.soywiz.korio.lang.*
 import com.soywiz.korte.dynamic.*
+import kotlinx.coroutines.*
 import kotlin.js.*
 import kotlin.test.*
 
@@ -351,9 +352,7 @@ class TemplateTest : BaseTest() {
         var field = 1
 
         suspend fun mytest123(): Int {
-            //fun mytest123(): Int {
-            //val r = executeInWorker { 1 }
-            var r = run { field }
+            val r = withContext(Dispatchers.Unconfined) { field }
             return r + 7
         }
 
