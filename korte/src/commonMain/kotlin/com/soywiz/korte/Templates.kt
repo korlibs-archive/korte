@@ -8,10 +8,9 @@ open class Templates(
     var root: VfsFile,
     var includes: VfsFile = root,
     var layouts: VfsFile = root,
-    val config: TemplateConfig = TemplateConfig()
+    val config: TemplateConfig = TemplateConfig(),
+    var cache: Boolean = true
 ) {
-    var cache = true
-
     @PublishedApi
     internal val tcache = AsyncCache()
 
