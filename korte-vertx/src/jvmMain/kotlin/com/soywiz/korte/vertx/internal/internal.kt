@@ -1,21 +1,19 @@
 package com.soywiz.korte.vertx.internal
 
+import com.soywiz.korte.util.*
 import io.vertx.core.*
-import kotlinx.coroutines.*
 import kotlin.coroutines.*
 
-internal fun <T> Handler<AsyncResult<T>>.handle(coroutineContext: CoroutineContext, callback: suspend () -> T) =
-    CoroutineScope(coroutineContext).async(coroutineContext) {
-        var result: T? = null
-        var cause: Throwable? = null
-        try {
-            result = callback()
-        } catch (e: Throwable) {
-            cause = e
-        }
-        this@handle.handle(VxAsyncResult(result, cause))
-    }
+internal fun <T> Handler<AsyncResult<T>>.handle(coroutineContext: CoroutineContext, callback: suspend () -> T) {
+    val handler = this
+    callback.startCoroutine(object : Continuation<T> {
+        override val context: CoroutineContext = coroutineContext
 
+        override fun resumeWith(result: Result<T>) {
+            handler.handle(VxAsyncResult(result.getOrNull(), result.exceptionOrNull()))
+        }
+    })
+}
 
 internal class VxAsyncResult<T>(val result: T?, val exception: Throwable?) : AsyncResult<T> {
     override fun succeeded(): Boolean = exception == null
@@ -25,7 +23,7 @@ internal class VxAsyncResult<T>(val result: T?, val exception: Throwable?) : Asy
 }
 
 internal class DeferredHandler<T> : Handler<AsyncResult<T>> {
-    val deferred = CompletableDeferred<T>()
+    val deferred = KorteDeferred<T>()
     override fun handle(event: AsyncResult<T>) {
         if (event.failed()) {
             deferred.completeExceptionally(event.cause())

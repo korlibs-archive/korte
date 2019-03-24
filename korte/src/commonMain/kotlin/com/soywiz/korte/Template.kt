@@ -1,10 +1,7 @@
 package com.soywiz.korte
 
-import com.soywiz.kds.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.stream.*
 import com.soywiz.korte.dynamic.*
+import com.soywiz.korte.internal.*
 import com.soywiz.korte.util.*
 import kotlin.collections.set
 
@@ -13,7 +10,7 @@ class Template internal constructor(
     val templates: Templates,
     val template: String,
     val config: TemplateConfig = TemplateConfig()
-) : Extra by Extra.Mixin() {
+) {
     // @TODO: Move to parse plugin + extra
     var frontMatter: Map<String, Any?>? = null
 
@@ -160,7 +157,7 @@ class Template internal constructor(
         val macros = hashMapOf<String, Macro>()
         var currentBlock: BlockInTemplateEval? = null
 
-        val filterCtxPool = Pool { Filter.Ctx() }
+        internal val filterCtxPool = Pool { Filter.Ctx() }
 
         inline fun <T> setTempTemplate(template: TemplateEvalContext, callback: () -> T): T {
             val oldTemplate = this.currentTemplate
@@ -222,6 +219,6 @@ class Template internal constructor(
 }
 
 suspend fun Template(template: String, config: TemplateConfig = TemplateConfig()): Template = Templates(
-    MemoryVfs(mapOf("template" to template.toByteArray(config.charset).openAsync())),
+    TemplateProvider(mapOf("template" to template)),
     config = config
 ).get("template")

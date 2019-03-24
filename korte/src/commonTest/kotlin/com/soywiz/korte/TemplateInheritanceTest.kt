@@ -1,7 +1,5 @@
 package com.soywiz.korte
 
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
 import kotlin.test.*
 
 class TemplateInheritanceTest {
@@ -10,7 +8,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "hello",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "a" to "hello"
                 )
             ).get("a").invoke()
@@ -22,7 +20,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "hello",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "a" to "{% block test %}hello{% end %}"
                 )
             ).get("a")()
@@ -32,7 +30,7 @@ class TemplateInheritanceTest {
     @Test
     fun extends() = suspendTest {
         val template = Templates(
-            MemoryVfsMix(
+            TemplateProvider(
                 "a" to """{% block test %}a{% end %}""",
                 "b" to """{% extends "a" %}{% block test %}b{% end %}"""
             )
@@ -48,7 +46,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "c",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "a" to """{% block test %}a{% end %}""",
                     "b" to """{% extends "a" %}{% block test %}b{% end %}""",
                     "c" to """{% extends "b" %}{% block test %}c{% end %}"""
@@ -62,7 +60,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "<b><a>TEXT</a></b>",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "a" to """{% block test %}<a>TEXT</a>{% end %}""",
                     "b" to """{% extends "a" %}{% block test %}<b>{{ parent() }}</b>{% end %}"""
                 )
@@ -75,7 +73,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "<c><b><a>TEXT</a></b></c>",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "a" to """{% block test %}<a>TEXT</a>{% end %}""",
                     "b" to """{% extends "a" %}{% block test %}<b>{{ parent() }}</b>{% end %}""",
                     "c" to """{% extends "b" %}{% block test %}<c>{{ parent() }}</c>{% end %}"""
@@ -89,7 +87,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "<root><left><L>left:LEFT</L></left><right><R>right:RIGHT</R></right></root>",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "root" to """<root>{% block main %}test{% end %}</root>""",
                     "2column" to """{% extends "root" %}  {% block main %}<left>{% block left %}left{% end %}</left><right>{% block right %}right{% end %}</right>{% end %}  """,
                     "mypage" to """{% extends "2column" %}  {% block right %}<R>{{ parent() }}:RIGHT</R>{% end %}  {% block left %}<L>{{ parent() }}:LEFT</L>{% end %}  """
@@ -103,7 +101,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "abcc",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "a" to """{% block b1 %}a{% end %}{% block b2 %}a{% end %}{% block b3 %}a{% end %}{% block b4 %}a{% end %}""",
                     "b" to """{% extends "a" %}{% block b2 %}b{% end %}{% block b4 %}b{% end %}""",
                     "c" to """{% extends "b" %}{% block b3 %}c{% end %}{% block b4 %}c{% end %}"""
@@ -117,7 +115,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "Hello World, Carlos.",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "include" to """World""",
                     "username" to """Carlos""",
                     "main" to """Hello {% include "include" %}, {% include "username" %}."""
@@ -131,7 +129,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "Hello Carlos.",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "mylayout" to """Hello {{ content }}.""",
                     "main" to """
 					---
@@ -150,7 +148,7 @@ class TemplateInheritanceTest {
         assertEquals(
             "<html><div>side</div><div><h1>Content</h1></div></html>",
             Templates(
-                MemoryVfsMix(
+                TemplateProvider(
                     "root" to """
 					<html>{{ content }}</html>
                 """.trimIndent(),

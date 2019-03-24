@@ -1,10 +1,8 @@
 package com.soywiz.korte
 
-import com.soywiz.kds.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
 import com.soywiz.korte.dynamic.*
 import com.soywiz.korte.internal.*
+import com.soywiz.korte.util.*
 
 interface ExprNode : DynamicContext {
     suspend fun eval(context: Template.EvalContext): Any?
@@ -361,9 +359,9 @@ interface ExprNode : DynamicContext {
                         if (id[0].isDigit()) emit(ExprNode.Token.TNumber(id)) else emit(ExprNode.Token.TId(id))
                     }
                     r.skipSpaces()
-                    if (r.peek(3) in ExprNode.Token.Companion.OPERATORS) emit(ExprNode.Token.TOperator(r.read(3)))
-                    if (r.peek(2) in ExprNode.Token.Companion.OPERATORS) emit(ExprNode.Token.TOperator(r.read(2)))
-                    if (r.peek(1) in ExprNode.Token.Companion.OPERATORS) emit(ExprNode.Token.TOperator(r.read(1)))
+                    if (r.peek(3) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(3)))
+                    if (r.peek(2) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(2)))
+                    if (r.peek(1) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(1)))
                     if (r.peek() == '\'' || r.peek() == '"') {
                         val strStart = r.read()
                         val strBody = r.readUntil(strStart) ?: ""

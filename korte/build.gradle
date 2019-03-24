@@ -1,7 +1,5 @@
-//apply plugin: com.soywiz.korlibs.KorlibsPluginNoNative
 apply plugin: com.soywiz.korlibs.KorlibsPlugin
 
 korlibs {
     exposeVersion()
-    dependencyMulti("com.soywiz:korio:$korioVersion")
 }

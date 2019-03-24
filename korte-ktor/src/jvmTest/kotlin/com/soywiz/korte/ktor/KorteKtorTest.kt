@@ -1,6 +1,6 @@
 package com.soywiz.korte.ktor
 
-import com.soywiz.korio.file.std.*
+import com.soywiz.korte.*
 import com.soywiz.korte.dynamic.*
 import io.ktor.application.*
 import io.ktor.http.*
@@ -21,7 +21,7 @@ class KorteKtorTest {
                     install(Korte) {
                         cache(true)
                         root(
-                            MemoryVfsMix(
+                            TemplateProvider(
                                 "demo.tpl" to "Hello {{ hello }}"
                             )
                         )

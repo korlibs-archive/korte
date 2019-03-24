@@ -1,14 +1,13 @@
 package com.soywiz.korte.vertx
 
-import com.soywiz.korio.file.std.*
 import com.soywiz.korte.*
 import com.soywiz.korte.vertx.internal.*
 import io.vertx.core.*
 import io.vertx.core.http.*
 import io.vertx.ext.web.*
 import io.vertx.ext.web.handler.*
-import kotlinx.coroutines.*
 import org.junit.Test
+import kotlin.coroutines.*
 import kotlin.test.*
 
 class KorteVertxTemplateEngineTest {
@@ -21,7 +20,7 @@ class KorteVertxTemplateEngineTest {
         val template = TemplateHandler.create(
             KorteVertxTemplateEngine(
                 coroutineContext, Templates(
-                    MemoryVfsMix(
+                    TemplateProvider(
                         "index.html" to "hello world {{ 1 + 2 }}!",
                         "hello.html" to "Nice :)!"
                     )

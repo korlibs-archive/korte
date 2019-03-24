@@ -1,14 +1,11 @@
 package com.soywiz.korte.ktor
 
-import com.soywiz.korio.file.*
-import com.soywiz.korio.file.std.*
 import com.soywiz.korte.*
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.http.content.*
 import io.ktor.response.*
 import io.ktor.util.*
-import kotlinx.coroutines.io.*
 
 class KorteContent(
     val template: String,
@@ -17,20 +14,17 @@ class KorteContent(
     val contentType: ContentType = ContentType.Text.Html.withCharset(Charsets.UTF_8)
 )
 
-suspend fun ApplicationCall.respondKorte(template: String, model: Any? = null, etag: String? = null, contentType: ContentType = ContentType.Text.Html.withCharset(Charsets.UTF_8)) {
+suspend fun ApplicationCall.respondKorte(
+    template: String,
+    model: Any? = null,
+    etag: String? = null,
+    contentType: ContentType = ContentType.Text.Html.withCharset(Charsets.UTF_8)
+) {
     respond(KorteContent(template, model, etag, contentType))
 }
 
 class Korte(private val config: Configuration) {
-    class Configuration : TemplateConfig() {
-        var templates = Templates(MemoryVfs(), config = this)
-        fun cache(value: Boolean) = this.apply { templates.cache = value }
-        fun root(root: VfsFile, includes: VfsFile = root, layouts: VfsFile = root) = this.apply {
-            templates.root = root
-            templates.includes = includes
-            templates.layouts = layouts
-        }
-    }
+    class Configuration : TemplateConfigWithTemplates()
 
     companion object Feature : ApplicationFeature<ApplicationCallPipeline, Configuration, Korte> {
         val VERSION get() = com.soywiz.korte.Korte.VERSION

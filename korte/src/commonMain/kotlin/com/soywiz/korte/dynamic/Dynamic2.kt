@@ -1,7 +1,6 @@
 package com.soywiz.korte.dynamic
 
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.util.*
+import com.soywiz.korte.internal.*
 import kotlin.math.*
 import kotlin.reflect.*
 
@@ -53,7 +52,7 @@ object Dynamic2 : DynamicContext {
         ">=" -> compare(l, r) >= 0
         "in" -> contains(r, l)
         "?:" -> if (toBool(l)) l else r
-        else -> noImpl("Not implemented binary operator '$op'")
+        else -> error("Not implemented binary operator '$op'")
     }
 
     fun unop(r: Any?, op: String): Any? = when (op) {
@@ -61,7 +60,7 @@ object Dynamic2 : DynamicContext {
         "-" -> -toDouble(r)
         "~" -> toInt(r).inv()
         "!" -> !toBool(r)
-        else -> noImpl("Not implemented unary operator $op")
+        else -> error("Not implemented unary operator $op")
     }
 
     fun contains(collection: Any?, element: Any?): Boolean = when (collection) {

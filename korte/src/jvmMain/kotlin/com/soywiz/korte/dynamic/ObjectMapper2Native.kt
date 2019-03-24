@@ -1,22 +1,36 @@
 package com.soywiz.korte.dynamic
 
-import com.soywiz.kds.*
-import com.soywiz.korio.async.*
-import com.soywiz.korio.util.*
+import com.soywiz.korte.util.*
 import java.lang.reflect.*
+import java.util.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 import kotlin.reflect.*
 
 open class JvmObjectMapper2 : ObjectMapper2() {
     class ClassReflectCache<T : Any>(val clazz: KClass<T>) {
-        data class MyProperty(val name: String, val getter: Method? = null, val setter: Method? = null, val field: Field? = null)
+        data class MyProperty(
+            val name: String,
+            val getter: Method? = null,
+            val setter: Method? = null,
+            val field: Field? = null
+        )
 
         val jclass = clazz.java
         val methodsByName = jclass.allDeclaredMethods.associateBy { it.name }
         val fieldsByName = jclass.allDeclaredFields.associateBy { it.name }
         val potentialPropertyNamesFields = jclass.allDeclaredFields.map { it.name }
-        val potentialPropertyNamesGetters = jclass.allDeclaredMethods.filter { it.name.startsWith("get") }.map { it.name.substring(3).decapitalize() }
+        val potentialPropertyNamesGetters =
+            jclass.allDeclaredMethods.filter { it.name.startsWith("get") }.map { it.name.substring(3).decapitalize() }
         val potentialPropertyNames = (potentialPropertyNamesFields + potentialPropertyNamesGetters).toSet()
-        val propByName = potentialPropertyNames.map { propName -> MyProperty(propName, methodsByName["get${propName.capitalize()}"], methodsByName["set${propName.capitalize()}"], fieldsByName[propName]) }.associateBy { it.name }
+        val propByName = potentialPropertyNames.map { propName ->
+            MyProperty(
+                propName,
+                methodsByName["get${propName.capitalize()}"],
+                methodsByName["set${propName.capitalize()}"],
+                fieldsByName[propName]
+            )
+        }.associateBy { it.name }
     }
 
     val KClass<*>.classInfo by WeakPropertyThis<KClass<*>, ClassReflectCache<*>> { ClassReflectCache(this) }
@@ -42,6 +56,40 @@ open class JvmObjectMapper2 : ObjectMapper2() {
     override suspend fun get(instance: Any, key: Any?): Any? {
         val prop = instance::class.classInfo.propByName[key] ?: return null
         return prop.getter?.invoke(instance)
+    }
+}
+
+private class WeakPropertyThis<T : Any, V>(val gen: T.() -> V) {
+    val map = WeakHashMap<T, V>()
+
+    operator fun getValue(obj: T, property: KProperty<*>): V = map.getOrPut(obj) { gen(obj) }
+    operator fun setValue(obj: T, property: KProperty<*>, value: V) = run { map[obj] = value }
+}
+
+private val Class<*>.allDeclaredFields: List<Field>
+    get() = this.declaredFields.toList() + (this.superclass?.allDeclaredFields?.toList() ?: listOf<Field>())
+
+private fun Class<*>.isSubtypeOf(that: Class<*>) = that.isAssignableFrom(this)
+
+private val Class<*>.allDeclaredMethods: List<Method>
+    get() = this.declaredMethods.toList() + (this.superclass?.allDeclaredMethods?.toList() ?: listOf<Method>())
+
+suspend fun Method.invokeSuspend(obj: Any?, args: List<Any?>): Any? {
+    val method = this@invokeSuspend
+    val cc = coroutineContext
+
+    val lastParam = method.parameterTypes.lastOrNull()
+    val margs = java.util.ArrayList(args)
+    var deferred: KorteDeferred<Any?>? = null
+
+    if (lastParam != null && lastParam.isAssignableFrom(Continuation::class.java)) {
+        deferred = KorteDeferred<Any?>()
+        margs += deferred.toContinuation(cc)
+    }
+    val result = method.invoke(obj, *margs.toTypedArray())
+    return when (result) {
+        COROUTINE_SUSPENDED -> deferred?.await()
+        else -> result
     }
 }
 

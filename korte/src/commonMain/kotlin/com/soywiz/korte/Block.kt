@@ -1,9 +1,8 @@
 package com.soywiz.korte
 
-import com.soywiz.kds.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.serialization.yaml.*
 import com.soywiz.korte.dynamic.*
+import com.soywiz.korte.internal.*
+import com.soywiz.korte.util.*
 
 interface Block : DynamicContext {
     suspend fun eval(context: Template.EvalContext)
@@ -58,10 +57,16 @@ interface Block : DynamicContext {
                                     children.clear()
                                 }
                                 else -> {
-                                    val newtag = parseContext.config.tags[it.name] ?: invalidOp("Can't find tag ${it.name} with content ${it.content}")
+                                    val newtag = parseContext.config.tags[it.name]
+                                        ?: invalidOp("Can't find tag ${it.name} with content ${it.content}")
                                     children += when {
                                         newtag.end != null -> handle(newtag, it)
-                                        else -> newtag.buildNode(Tag.BuildContext(parseContext, listOf(Tag.Part(it, DefaultBlocks.BlockText("")))))
+                                        else -> newtag.buildNode(
+                                            Tag.BuildContext(
+                                                parseContext,
+                                                listOf(Tag.Part(it, DefaultBlocks.BlockText("")))
+                                            )
+                                        )
                                     }
                                 }
                             }

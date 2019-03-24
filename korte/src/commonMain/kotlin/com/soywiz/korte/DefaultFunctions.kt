@@ -1,7 +1,6 @@
 package com.soywiz.korte
 
-import com.soywiz.kmem.*
-import com.soywiz.korte.dynamic.*
+import com.soywiz.korte.internal.*
 
 @Suppress("unused")
 object DefaultFunctions {

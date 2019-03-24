@@ -1,9 +1,6 @@
 package com.soywiz.korte
 
-import com.soywiz.kmem.*
-import com.soywiz.korio.lang.*
-import com.soywiz.korio.serialization.json.*
-import com.soywiz.korio.util.*
+import com.soywiz.korte.internal.*
 
 @Suppress("unused")
 object DefaultFilters {
@@ -24,10 +21,10 @@ object DefaultFilters {
         val length = lengthArg?.toDynamicInt() ?: subject.dynamicLength()
         if (subject is String) {
             val str = subject.toDynamicString()
-            str.slice(start.clamp(0, str.length) until (start + length).clamp(0, str.length))
+            str.slice(start.coerceIn(0, str.length) until (start + length).coerceIn(0, str.length))
         } else {
             val list = subject.toDynamicList()
-            list.slice(start.clamp(0, list.size) until (start + length).clamp(0, list.size))
+            list.slice(start.coerceIn(0, list.size) until (start + length).coerceIn(0, list.size))
         }
     }
 
@@ -52,6 +49,20 @@ object DefaultFilters {
     }
 
     val ALL = listOf(
-        Capitalize, Join, Length, Lower, Quote, Raw, Reverse, Slice, Sort, Trim, Upper, Merge, JsonEncode, Format, Chunked
+        Capitalize,
+        Join,
+        Length,
+        Lower,
+        Quote,
+        Raw,
+        Reverse,
+        Slice,
+        Sort,
+        Trim,
+        Upper,
+        Merge,
+        JsonEncode,
+        Format,
+        Chunked
     )
 }

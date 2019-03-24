@@ -1,10 +1,7 @@
 package com.soywiz.korte
 
-import com.soywiz.korio.async.*
-import com.soywiz.korio.file.std.*
-import com.soywiz.korio.lang.*
 import com.soywiz.korte.dynamic.*
-import kotlinx.coroutines.*
+import com.soywiz.korte.util.*
 import kotlin.js.*
 import kotlin.test.*
 
@@ -25,13 +22,15 @@ class TemplateTest : BaseTest() {
 
     @Test
     fun testSwitch() = suspendTest {
-        val template = Template("""
+        val template = Template(
+            """
             {% switch value %}
             {% case "a" %}1
             {% case "b" %}2
             {% default %}3
             {% endswitch %}
-        """.trimIndent())
+        """.trimIndent()
+        )
         assertEquals("1", template(mapOf("value" to "a")).trim())
         assertEquals("2", template(mapOf("value" to "b")).trim())
         assertEquals("3", template(mapOf("value" to "c")).trim())
@@ -352,7 +351,9 @@ class TemplateTest : BaseTest() {
         var field = 1
 
         suspend fun mytest123(): Int {
-            val r = withContext(Dispatchers.Unconfined) { field }
+            val deferred = KorteDeferred<Int>()
+            deferred.complete(field)
+            val r = deferred.await()
             return r + 7
         }
 
@@ -394,13 +395,13 @@ class TemplateTest : BaseTest() {
     @Test
     @Ignore // @TODO: Don't know why it fails
     fun testMissingFilterName() = suspendTest {
-        expectException<InvalidOperationException>("Missing filter name") { Template("{{ 'a'| }}")() }
+        expectException<RuntimeException>("Missing filter name") { Template("{{ 'a'| }}")() }
     }
 
     @Test
     fun testImportMacros() = suspendTest {
         val templates = Templates(
-            MemoryVfsMix(
+            TemplateProvider(
                 "root.html" to "{% import '_macros.html' as macros %}{{ macros.putUserLink('hello') }}",
                 "_macros.html" to "{% macro putUserLink(user) %}<a>{{ user }}</a>{% endmacro %}"
             )

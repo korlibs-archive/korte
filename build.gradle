@@ -1,0 +1,10 @@
+subprojects {
+    afterEvaluate {
+        // @TODO: Move this to kortemplate
+        jvmTest {
+            testLogging {
+                exceptionFormat = 'full'
+            }
+        }
+    }
+}
