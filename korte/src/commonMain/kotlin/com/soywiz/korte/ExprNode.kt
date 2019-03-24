@@ -138,11 +138,16 @@ interface ExprNode : DynamicContext {
         }
 
         fun parseFullExpr(r: ListReader<Token>): ExprNode {
-            val result = ExprNode.parseExpr(r)
-            if (r.hasMore && r.peek() !is ExprNode.Token.TEnd) {
-                r.peek().exception("Expected expression at " + r.peek() + " :: " + r.list.map { it.text }.joinToString(""))
+            try {
+                val result = ExprNode.parseExpr(r)
+                if (r.hasMore && r.peek() !is ExprNode.Token.TEnd) {
+                    r.peek()
+                        .exception("Expected expression at " + r.peek() + " :: " + r.list.map { it.text }.joinToString(""))
+                }
+                return result
+            } catch (e: ListReader.OutOfBoundsException) {
+                r.list.last().exception("Incomplete expression")
             }
-            return result
         }
 
         private val BINOPS_PRIORITIES_LIST = listOf(
@@ -190,13 +195,13 @@ interface ExprNode : DynamicContext {
         fun parseTernaryExpr(r: ListReader<Token>): ExprNode {
             var left = this.parseBinExpr(r)
             if (r.peek().text == "?") {
-                r.skip();
+                r.skip()
                 val middle = parseExpr(r)
                 r.expect(":")
                 val right = parseExpr(r)
-                left = TERNARY(left, middle, right);
+                left = TERNARY(left, middle, right)
             }
-            return left;
+            return left
         }
 
         fun parseExpr(r: ListReader<Token>): ExprNode = parseTernaryExpr(r)
