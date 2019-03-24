@@ -127,11 +127,11 @@ interface ExprNode : DynamicContext {
         }
 
         fun parseId(r: ListReader<Token>): String {
-            return r.read().text
+            return r.tryRead()?.text ?: (r.tryPrev() ?: r.ctx)?.exception("Expected id") ?: TODO()
         }
 
         fun expect(r: ListReader<Token>, vararg tokens: String) {
-            val token = r.read()
+            val token = r.tryRead() ?: r.prevOrContext().exception("Expected ${tokens.joinToString(", ")} but found end")
             if (token.text !in tokens) token.exception("Expected ${tokens.joinToString(", ")} but found $token")
         }
 
@@ -204,9 +204,12 @@ interface ExprNode : DynamicContext {
             return left
         }
 
-        fun parseExpr(r: ListReader<Token>): ExprNode = parseTernaryExpr(r)
+        fun parseExpr(r: ListReader<Token>): ExprNode {
+            return parseTernaryExpr(r)
+        }
 
         private fun parseFinal(r: ListReader<Token>): ExprNode {
+            if (!r.hasMore) r.prevOrContext().exception("Expected expression")
             val tok = r.peek().text.toUpperCase()
             var construct: ExprNode = when (tok) {
                 "!", "~", "-", "+", "NOT" -> {
@@ -339,7 +342,7 @@ interface ExprNode : DynamicContext {
         data class TNumber(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
         data class TString(override val text: String, val processedValue: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
         data class TOperator(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
-        //data class TEnd(override val text: String = "") : ExprNode.Token, TokenContext by TokenContext.Mixin()
+        data class TEnd(override val text: String = "") : ExprNode.Token, TokenContext by TokenContext.Mixin()
 
         companion object {
             private val OPERATORS = setOf(
@@ -357,12 +360,16 @@ interface ExprNode : DynamicContext {
                 "="
             )
 
+            fun ExprNode.Token.annotate(context: FilePosContext, tpos: Int) = this.apply {
+                pos = context.pos + tpos
+                file = context.file
+            }
+
             fun tokenize(str: String, context: FilePosContext): ListReader<Token> {
                 val r = StrReader(str)
                 val out = arrayListOf<ExprNode.Token>()
                 fun emit(str: ExprNode.Token, tpos: Int) {
-                    str.pos = context.pos + tpos
-                    str.file = context.file
+                    str.annotate(context, tpos)
                     out += str
                 }
                 while (r.hasMore) {
@@ -392,7 +399,7 @@ interface ExprNode : DynamicContext {
                 }
                 val dstart = r.pos
                 //emit(ExprNode.Token.TEnd(), dstart)
-                return ListReader(out)
+                return ListReader(out, ExprNode.Token.TEnd().annotate(context, dstart))
             }
         }
     }

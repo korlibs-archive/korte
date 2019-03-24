@@ -3,8 +3,8 @@ package com.soywiz.korte.internal
 import com.soywiz.korte.util.*
 
 internal object Yaml {
-	fun decode(str: String): Any? = read(ListReader(StrReader(str).tokenize()), level = 0)
-	fun read(str: String): Any? = read(ListReader(StrReader(str).tokenize()), level = 0)
+	fun decode(str: String): Any? = read(ListReader(StrReader(str).tokenize(), null), level = 0)
+	fun read(str: String): Any? = read(ListReader(StrReader(str).tokenize(), null), level = 0)
 
 	private fun parseStr(tok: Token) = when (tok) {
 		is Token.STR -> tok.ustr

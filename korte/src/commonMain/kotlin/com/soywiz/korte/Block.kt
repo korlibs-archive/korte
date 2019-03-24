@@ -12,7 +12,7 @@ interface Block : DynamicContext {
             if (children.size == 1) children[0] else DefaultBlocks.BlockGroup(children)
 
         class Parse(val tokens: List<Token>, val parseContext: Template.ParseContext) {
-            val tr = ListReader(tokens)
+            val tr = ListReader(tokens, tokens.lastOrNull())
 
             suspend fun handle(tag: Tag, token: Token.TTag): Block {
                 val parts = arrayListOf<Tag.Part>()
