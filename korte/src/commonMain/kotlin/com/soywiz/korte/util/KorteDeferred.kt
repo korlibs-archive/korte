@@ -1,14 +1,18 @@
 package com.soywiz.korte.util
 
+import com.soywiz.korte.internal.*
 import kotlin.coroutines.*
 
 class KorteDeferred<T> {
+	private val lock = KorteLock()
 	private var result: Result<T>? = null
 	private val continuations = arrayListOf<Continuation<T>>()
 
 	fun completeWith(result: Result<T>) {
 		//println("completeWith: $result")
-		this.result = result
+		lock {
+			this.result = result
+		}
 		resolveIfRequired()
 	}
 
@@ -16,18 +20,20 @@ class KorteDeferred<T> {
 	fun complete(value: T) = completeWith(Result.success(value))
 
 	suspend fun await(): T = suspendCoroutine { c ->
-		continuations += c
+		lock {
+			continuations += c
+		}
 		//println("await:$c")
 		resolveIfRequired()
 	}
 
 	private fun resolveIfRequired() {
-		if (continuations.isNotEmpty()) {
+		if (lock { continuations.isNotEmpty() }) {
 			//println("list")
-			val result = result
+			val result = lock { result }
 			if (result != null) {
-				val copy = continuations.toList()
-				continuations.clear()
+				val copy = lock { continuations.toList() }
+				lock { continuations.clear() }
 
 				for (v in copy) {
 					//println("resume:$v")

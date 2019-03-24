@@ -4,16 +4,17 @@ import com.soywiz.korte.util.*
 import kotlin.coroutines.*
 
 internal class AsyncCache {
+	private val lock = KorteLock()
 	@PublishedApi
 	internal val deferreds = LinkedHashMap<String, KorteDeferred<*>>()
 
 	fun invalidateAll() {
-		deferreds.clear()
+		lock { deferreds.clear() }
 	}
 
 	@Suppress("UNCHECKED_CAST")
 	suspend operator fun <T> invoke(key: String, gen: suspend () -> T): T {
-		val deferred = (deferreds.getOrPut(key) { KorteDeferred.asyncImmediately(coroutineContext) { gen() } } as KorteDeferred<T>)
+		val deferred = lock { (deferreds.getOrPut(key) { KorteDeferred.asyncImmediately(coroutineContext) { gen() } } as KorteDeferred<T>) }
 		return deferred.await()
 	}
 }
