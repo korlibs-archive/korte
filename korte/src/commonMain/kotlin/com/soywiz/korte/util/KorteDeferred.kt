@@ -28,22 +28,14 @@ class KorteDeferred<T> {
 	}
 
 	private fun resolveIfRequired() {
-		if (lock { continuations.isNotEmpty() }) {
-			//println("list")
-			val result = lock { result }
-			if (result != null) {
-				val copy = lock { continuations.toList() }
-				lock { continuations.clear() }
-
-				for (v in copy) {
-					//println("resume:$v")
-					v.resumeWith(result)
-				}
-			} else {
-				//println("result is null")
+		val result = lock { result }
+		if (result != null) {
+			for (v in lock {
+				if (continuations.isEmpty()) emptyList() else continuations.toList().also { continuations.clear() }
+			}) {
+				//println("resume:$v")
+				v.resumeWith(result)
 			}
-		} else {
-			//println("empty")
 		}
 	}
 
