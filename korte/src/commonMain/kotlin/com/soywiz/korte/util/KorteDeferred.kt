@@ -7,6 +7,7 @@ class KorteDeferred<T> {
 	private val continuations = arrayListOf<Continuation<T>>()
 
 	fun completeWith(result: Result<T>) {
+		//println("completeWith: $result")
 		this.result = result
 		resolveIfRequired()
 	}
@@ -16,14 +17,28 @@ class KorteDeferred<T> {
 
 	suspend fun await(): T = suspendCoroutine { c ->
 		continuations += c
+		//println("await:$c")
 		resolveIfRequired()
 	}
 
 	private fun resolveIfRequired() {
-		val copy = continuations.toList()
-		continuations.clear()
-		val result = result
-		if (result != null) for (v in copy) v.resumeWith(result)
+		if (continuations.isNotEmpty()) {
+			//println("list")
+			val result = result
+			if (result != null) {
+				val copy = continuations.toList()
+				continuations.clear()
+
+				for (v in copy) {
+					//println("resume:$v")
+					v.resumeWith(result)
+				}
+			} else {
+				//println("result is null")
+			}
+		} else {
+			//println("empty")
+		}
 	}
 
 	fun toContinuation(coroutineContext: CoroutineContext) = object : Continuation<T> {
@@ -32,19 +47,12 @@ class KorteDeferred<T> {
 	}
 
 	companion object {
-		fun <T> asyncImmediately(coroutineContext: CoroutineContext, callback: suspend () -> T): KorteDeferred<T> {
-			val deferred = KorteDeferred<T>()
-			callback.startCoroutine(object : Continuation<T> {
-				override val context: CoroutineContext = coroutineContext
-				override fun resumeWith(result: Result<T>) {
-					if (result.isSuccess) {
-						deferred.complete(result.getOrThrow())
-					} else {
-						deferred.completeExceptionally(result.exceptionOrNull()!!)
-					}
-				}
-			})
-			return deferred
-		}
+		fun <T> asyncImmediately(coroutineContext: CoroutineContext, callback: suspend () -> T): KorteDeferred<T> =
+			KorteDeferred<T>().also { deferred ->
+				callback.startCoroutine(object : Continuation<T> {
+					override val context: CoroutineContext = coroutineContext
+					override fun resumeWith(result: Result<T>) = deferred.completeWith(result)
+				})
+			}
 	}
 }

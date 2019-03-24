@@ -4,6 +4,7 @@ import com.soywiz.korte.*
 import com.soywiz.korte.dynamic.*
 import io.ktor.application.*
 import io.ktor.http.*
+import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.*
@@ -20,6 +21,7 @@ class KorteKtorTest {
                 application.apply {
                     install(Korte) {
                         cache(true)
+                        //cache(false)
                         root(
                             TemplateProvider(
                                 "demo.tpl" to "Hello {{ hello }}"
@@ -30,6 +32,7 @@ class KorteKtorTest {
                         get("/") {
                             //call.respondKorte("demo.tpl", mapOf("hello" to "world"))
                             call.respondKorte("demo.tpl", MyModel(hello = "world"))
+                            //call.respondText("Hello world")
                         }
                     }
                     assertEquals("Hello world", handleRequest(HttpMethod.Get, "/") { }.response.content)

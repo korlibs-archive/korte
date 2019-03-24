@@ -5,13 +5,15 @@ import kotlin.coroutines.*
 
 internal class AsyncCache {
 	@PublishedApi
-	internal val promises = LinkedHashMap<String, KorteDeferred<*>>()
+	internal val deferreds = LinkedHashMap<String, KorteDeferred<*>>()
 
 	fun invalidateAll() {
-		promises.clear()
+		deferreds.clear()
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	suspend operator fun <T> invoke(key: String, gen: suspend () -> T): T =
-		(promises.getOrPut(key) { KorteDeferred.asyncImmediately(coroutineContext) { gen() } } as KorteDeferred<T>).await()
+	suspend operator fun <T> invoke(key: String, gen: suspend () -> T): T {
+		val deferred = (deferreds.getOrPut(key) { KorteDeferred.asyncImmediately(coroutineContext) { gen() } } as KorteDeferred<T>)
+		return deferred.await()
+	}
 }

@@ -36,7 +36,11 @@ open class Templates(
     }
 
     suspend fun render(name: String, vararg args: Pair<String, Any?>): String = get(name).invoke(*args)
-    suspend fun render(name: String, args: Any?): String = get(name).invoke(args)
+    suspend fun render(name: String, args: Any?): String {
+        val template = get(name)
+        val renderered = template(args)
+        return renderered
+    }
     suspend fun prender(name: String, vararg args: Pair<String, Any?>): AsyncTextWriterContainer =
         get(name).prender(*args)
 

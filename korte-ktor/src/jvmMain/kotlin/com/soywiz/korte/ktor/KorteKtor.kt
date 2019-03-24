@@ -19,9 +19,7 @@ suspend fun ApplicationCall.respondKorte(
     model: Any? = null,
     etag: String? = null,
     contentType: ContentType = ContentType.Text.Html.withCharset(Charsets.UTF_8)
-) {
-    respond(KorteContent(template, model, etag, contentType))
-}
+) = respond(KorteContent(template, model, etag, contentType))
 
 class Korte(private val config: Configuration) {
     class Configuration : TemplateConfigWithTemplates()
@@ -45,7 +43,12 @@ class Korte(private val config: Configuration) {
     }
 
     private suspend fun process(content: KorteContent): OutgoingContent {
-        return TextContent(config.templates.render(content.template, content.model), content.contentType)
+        try {
+            val rendered = config.templates.render(content.template, content.model)
+            return TextContent(rendered, content.contentType)
+        } catch (e: Throwable) {
+            throw e
+        }
     }
 
     /*
