@@ -7,6 +7,7 @@ object DefaultTags {
 		val tokens = part.tag.tokens
 		val name = ExprNode.parseId(tokens)
 		if (name.isEmpty()) throw IllegalArgumentException("block without name")
+		tokens.expectEnd()
 		context.template.addBlock(name, part.body)
 		DefaultBlocks.BlockBlock(name)
 	}
@@ -15,6 +16,7 @@ object DefaultTags {
 		val main = chunks[0]
 		val tr = main.tag.tokens
 		val varname = ExprNode.parseId(tr)
+		tr.expectEnd()
 		DefaultBlocks.BlockCapture(varname, main.body)
 	}
 
@@ -42,6 +44,7 @@ object DefaultTags {
 		} while (tr.tryRead(",") != null)
 		ExprNode.expect(tr, "in")
 		val expr = ExprNode.parseExpr(tr)
+		tr.expectEnd()
 		DefaultBlocks.BlockFor(varnames, expr, main.body, elseTag)
 	}
 
@@ -74,6 +77,7 @@ object DefaultTags {
 		val file = s.parseExpr()
 		s.expect("as")
 		val name = s.read().text
+		s.expectEnd()
 		DefaultBlocks.BlockImport(file, name)
 	}
 
@@ -90,6 +94,7 @@ object DefaultTags {
 		s.expect("(")
 		val params = s.parseIdList()
 		s.expect(")")
+		s.expectEnd()
 		DefaultBlocks.BlockMacro(funcname, params, part.body)
 	}
 
@@ -99,6 +104,7 @@ object DefaultTags {
 		val varname = ExprNode.parseId(tr)
 		ExprNode.expect(tr, "=")
 		val expr = ExprNode.parseExpr(tr)
+		tr.expectEnd()
 		DefaultBlocks.BlockSet(varname, expr)
 	}
 

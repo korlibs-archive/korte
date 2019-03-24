@@ -10,5 +10,6 @@ class ListReader<T> constructor(val list: List<T>) {
     fun peek(): T = list.getOrNull(position) ?: throw OutOfBoundsException(this, position)
     fun skip(count: Int = 1) = this.apply { this.position += count }
     fun read(): T = peek().apply { skip(1) }
+    fun tryRead(): T? = if (hasMore) read() else null
     override fun toString(): String = "ListReader($list)"
 }

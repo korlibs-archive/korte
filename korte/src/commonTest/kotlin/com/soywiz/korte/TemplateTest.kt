@@ -399,7 +399,8 @@ class TemplateTest : BaseTest() {
 
     @Test fun testInvalid1() = suspendTest { expectException<KorteException>("String literal not closed at template:1:3") { Template("{{ ' }}")() } }
     @Test fun testInvalid2() = suspendTest { expectException<KorteException>("No expression at template:1:3") { Template("{{ }}")() } }
-    @Test fun testInvalid3() = suspendTest { expectException<KorteException>("Incomplete expression at template:1:8") { Template("{{ 1 + }}")() } }
+    @Test fun testInvalid3() = suspendTest { expectException<KorteException>("Incomplete expression at template:1:5") { Template("{{ 1 + }}")() } }
+    @Test fun testInvalid4() = suspendTest { expectException<KorteException>("Unexpected token at template:1:13") { Template("{% set a = hello world %}")() } }
 
     @Test
     fun testImportMacros() = suspendTest {

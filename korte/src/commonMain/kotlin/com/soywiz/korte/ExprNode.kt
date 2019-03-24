@@ -116,16 +116,14 @@ interface ExprNode : DynamicContext {
     }
 
     companion object {
-        fun parse(tag: com.soywiz.korte.Token.TTag): ExprNode {
-            return parse(tag.content, tag.posContext)
-        }
+        fun parse(tag: com.soywiz.korte.Token.TTag): ExprNode = parse(tag.content, tag.posContext)
 
         fun parse(str: String, context: FilePosContext): ExprNode {
             val tokens = ExprNode.Token.tokenize(str, context)
-            if (tokens.list.isEmpty() || tokens.list.first() is Token.TEnd) {
-                context.exception("No expression")
+            if (tokens.list.isEmpty()) context.exception("No expression")
+            return ExprNode.parseFullExpr(tokens).also {
+                tokens.expectEnd()
             }
-            return ExprNode.parseFullExpr(tokens)
         }
 
         fun parseId(r: ListReader<Token>): String {
@@ -140,7 +138,7 @@ interface ExprNode : DynamicContext {
         fun parseFullExpr(r: ListReader<Token>): ExprNode {
             try {
                 val result = ExprNode.parseExpr(r)
-                if (r.hasMore && r.peek() !is ExprNode.Token.TEnd) {
+                if (r.hasMore) {
                     r.peek()
                         .exception("Expected expression at " + r.peek() + " :: " + r.list.map { it.text }.joinToString(""))
                 }
@@ -194,12 +192,14 @@ interface ExprNode : DynamicContext {
 
         fun parseTernaryExpr(r: ListReader<Token>): ExprNode {
             var left = this.parseBinExpr(r)
-            if (r.peek().text == "?") {
-                r.skip()
-                val middle = parseExpr(r)
-                r.expect(":")
-                val right = parseExpr(r)
-                left = TERNARY(left, middle, right)
+            if (r.hasMore) {
+                if (r.peek().text == "?") {
+                    r.skip()
+                    val middle = parseExpr(r)
+                    r.expect(":")
+                    val right = parseExpr(r)
+                    left = TERNARY(left, middle, right)
+                }
             }
             return left
         }
@@ -296,7 +296,7 @@ interface ExprNode : DynamicContext {
                     }
                     "|" -> {
                         val tok = r.read()
-                        val name = r.read().text
+                        val name = r.tryRead()?.text ?: ""
                         val args = arrayListOf<ExprNode>()
                         if (name.isEmpty()) tok.exception("Missing filter name")
                         if (r.hasMore && r.peek().text == "(") {
@@ -339,7 +339,7 @@ interface ExprNode : DynamicContext {
         data class TNumber(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
         data class TString(override val text: String, val processedValue: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
         data class TOperator(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
-        data class TEnd(override val text: String = "") : ExprNode.Token, TokenContext by TokenContext.Mixin()
+        //data class TEnd(override val text: String = "") : ExprNode.Token, TokenContext by TokenContext.Mixin()
 
         companion object {
             private val OPERATORS = setOf(
@@ -391,11 +391,15 @@ interface ExprNode : DynamicContext {
                     }
                 }
                 val dstart = r.pos
-                emit(ExprNode.Token.TEnd(), dstart)
+                //emit(ExprNode.Token.TEnd(), dstart)
                 return ListReader(out)
             }
         }
     }
+}
+
+fun ListReader<ExprNode.Token>.expectEnd() {
+    if (hasMore) peek().exception("Unexpected token")
 }
 
 fun ListReader<ExprNode.Token>.tryRead(vararg types: String): ExprNode.Token? {
