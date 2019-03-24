@@ -4,7 +4,7 @@ internal class StrReader(val str: String, var pos: Int = 0) {
 	val length get() = str.length
 	val hasMore get() = pos < length
 
-	inline fun skipWhile(f: (Char) -> Boolean): Unit = run { while (f(peek())) skip() }
+	inline fun skipWhile(f: (Char) -> Boolean): Unit = run { while (hasMore && f(peek())) skip() }
 	fun skipUntil(f: (Char) -> Boolean): Unit = skipWhile { !f(it) }
 
 	// @TODO: https://youtrack.jetbrains.com/issue/KT-29577
@@ -53,7 +53,7 @@ internal fun StrReader.readStringLit(reportErrors: Boolean = true): String {
 	val quotec = read()
 	when (quotec) {
 		'"', '\'' -> Unit
-		else -> invalidOp("Invalid string literal")
+		else -> throw RuntimeException("Invalid string literal")
 	}
 	var closed = false
 	while (hasMore) {
@@ -65,7 +65,7 @@ internal fun StrReader.readStringLit(reportErrors: Boolean = true): String {
 					'\\' -> '\\'; '/' -> '/'; '\'' -> '\''; '"' -> '"'
 					'b' -> '\b'; 'f' -> '\u000c'; 'n' -> '\n'; 'r' -> '\r'; 't' -> '\t'
 					'u' -> read(4).toInt(0x10).toChar()
-					else -> invalidOp("Invalid char '$cc'")
+					else -> throw RuntimeException("Invalid char '$cc'")
 				}
 			)
 		} else if (c == quotec) {
@@ -76,7 +76,7 @@ internal fun StrReader.readStringLit(reportErrors: Boolean = true): String {
 		}
 	}
 	if (!closed && reportErrors) {
-		invalidOp("String literal not closed! '${this.str}'")
+		throw RuntimeException("String literal not closed! '${this.str}'")
 	}
 	return out.toString()
 }

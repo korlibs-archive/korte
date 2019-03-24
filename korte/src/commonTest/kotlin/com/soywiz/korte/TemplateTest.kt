@@ -389,14 +389,16 @@ class TemplateTest : BaseTest() {
 
     @Test
     fun testUnknownFilter() = suspendTest {
-        expectException<Throwable>("Unknown filter 'unknownFilter'") { Template("{{ 'a'|unknownFilter }}")() }
+        expectException<KorteException>("Unknown filter 'unknownFilter' at template:1:6") { Template("{{ 'a'|unknownFilter }}")() }
     }
 
     @Test
-    @Ignore // @TODO: Don't know why it fails
     fun testMissingFilterName() = suspendTest {
-        expectException<RuntimeException>("Missing filter name") { Template("{{ 'a'| }}")() }
+        expectException<KorteException>("Missing filter name at template:1:6") { Template("{{ 'a'| }}")() }
     }
+
+    @Test fun testInvalid1() = suspendTest { expectException<KorteException>("String literal not closed at template:1:3") { Template("{{ ' }}")() } }
+    @Test fun testInvalid2() = suspendTest { expectException<KorteException>("No expression at template:1:3") { Template("{{ }}")() } }
 
     @Test
     fun testImportMacros() = suspendTest {

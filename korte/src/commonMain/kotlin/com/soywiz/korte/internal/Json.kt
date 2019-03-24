@@ -28,7 +28,7 @@ internal object Json {
 			is Enum<*> -> encodeString(obj.name, b)
 			is String -> encodeString(obj, b)
 			is Number -> b.append("$obj")
-			else -> invalidOp("Don't know how to serialize $obj")
+			else -> throw RuntimeException("Don't know how to serialize $obj")
 		}
 	}
 

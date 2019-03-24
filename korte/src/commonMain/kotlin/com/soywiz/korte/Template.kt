@@ -16,7 +16,7 @@ class Template internal constructor(
 
     val blocks = hashMapOf<String, Block>()
     val parseContext = ParseContext(this, config)
-    val templateTokens = Token.Companion.tokenize(template)
+    val templateTokens = Token.tokenize(template, FilePosContext(FileContext(name, template), 0))
     lateinit var rootNode: Block; private set
 
     suspend fun init(): Template {

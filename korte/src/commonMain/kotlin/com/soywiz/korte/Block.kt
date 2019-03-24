@@ -47,7 +47,9 @@ interface Block : DynamicContext {
                             }
                             children += DefaultBlocks.BlockText(text)
                         }
-                        is Token.TExpr -> children += DefaultBlocks.BlockExpr(ExprNode.parse(it.content))
+                        is Token.TExpr -> {
+                            children += DefaultBlocks.BlockExpr(ExprNode.parse(it.content, it.posContext))
+                        }
                         is Token.TTag -> {
                             when (it.name) {
                                 in (tag.end ?: setOf()) -> break@loop
@@ -58,7 +60,7 @@ interface Block : DynamicContext {
                                 }
                                 else -> {
                                     val newtag = parseContext.config.tags[it.name]
-                                        ?: invalidOp("Can't find tag ${it.name} with content ${it.content}")
+                                        ?: it.exception("Can't find tag ${it.name} with content ${it.content}")
                                     children += when {
                                         newtag.end != null -> handle(newtag, it)
                                         else -> newtag.buildNode(

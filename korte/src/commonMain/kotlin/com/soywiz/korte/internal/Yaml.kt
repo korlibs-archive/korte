@@ -53,7 +53,7 @@ internal object Yaml {
 				val item = s.peek()
 				when (item.str) {
 					"-" -> {
-						if (s.read().str != "-") invalidOp()
+						if (s.read().str != "-") throw RuntimeException()
 						if (list == null) list = arrayListOf()
 						if (TRACE) println("${levelStr}LIST_ITEM...")
 						val res = read(s, level + 1)
@@ -61,7 +61,7 @@ internal object Yaml {
 						list.add(res)
 					}
 					"[" -> {
-						if (s.read().str != "[") invalidOp()
+						if (s.read().str != "[") throw RuntimeException()
 						val olist = arrayListOf<Any?>()
 						array@ while (s.peek().str != "]") {
 							olist += read(s, level + 1)
@@ -71,10 +71,10 @@ internal object Yaml {
 									s.read(); continue@array
 								}
 								"]" -> break@array
-								else -> invalidOp("Unexpected '$p'")
+								else -> throw RuntimeException("Unexpected '$p'")
 							}
 						}
-						if (s.read().str != "]") invalidOp()
+						if (s.read().str != "]") throw RuntimeException()
 						return olist
 					}
 					else -> {
@@ -85,7 +85,7 @@ internal object Yaml {
 							return parseStr(kkey)
 						} else {
 							if (map == null) map = LinkedHashMap()
-							if (s.read().str != ":") invalidOp()
+							if (s.read().str != ":") throw RuntimeException()
 							if (TRACE) println("${levelStr}MAP[$key]...")
 							val value = read(s, level + 1)
 							map[key] = value
@@ -122,7 +122,7 @@ internal object Yaml {
 				indents += indent
 			} else {
 				while (indents.isNotEmpty() && indent < indents.last()) indents.removeAt(indents.size - 1)
-				if (indents.isEmpty()) invalidOp()
+				if (indents.isEmpty()) throw RuntimeException()
 			}
 			val indentLevel = indents.size - 1
 			while (out.isNotEmpty() && out.last() is Token.LINE) out.removeAt(out.size - 1)

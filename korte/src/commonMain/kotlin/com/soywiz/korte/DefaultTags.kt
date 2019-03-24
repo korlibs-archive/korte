@@ -4,7 +4,7 @@ package com.soywiz.korte
 object DefaultTags {
 	val BlockTag = Tag("block", setOf(), setOf("end", "endblock")) {
 		val part = chunks.first()
-		val tokens = ExprNode.Token.tokenize(part.tag.content)
+		val tokens = part.tag.tokens
 		val name = ExprNode.parseId(tokens)
 		if (name.isEmpty()) throw IllegalArgumentException("block without name")
 		context.template.addBlock(name, part.body)
@@ -13,13 +13,13 @@ object DefaultTags {
 
 	val Capture = Tag("capture", setOf(), null) {
 		val main = chunks[0]
-		val tr = ExprNode.Token.tokenize(main.tag.content)
+		val tr = main.tag.tokens
 		val varname = ExprNode.parseId(tr)
 		DefaultBlocks.BlockCapture(varname, main.body)
 	}
 
 	val Debug = Tag("debug", setOf(), null) {
-		DefaultBlocks.BlockDebug(ExprNode.parse(chunks[0].tag.content))
+		DefaultBlocks.BlockDebug(chunks[0].tag.expr)
 	}
 
 	val Empty = Tag("", setOf(""), null) {
@@ -28,14 +28,14 @@ object DefaultTags {
 
 	val Extends = Tag("extends", setOf(), null) {
 		val part = chunks.first()
-		val parent = ExprNode.parseExpr(ExprNode.Token.tokenize(part.tag.content))
+		val parent = ExprNode.parseExpr(part.tag.tokens)
 		DefaultBlocks.BlockExtends(parent)
 	}
 
 	val For = Tag("for", setOf("else"), setOf("end", "endfor")) {
 		val main = chunks[0]
 		val elseTag = chunks.getOrNull(1)?.body
-		val tr = ExprNode.Token.tokenize(main.tag.content)
+		val tr = main.tag.tokens
 		val varnames = arrayListOf<String>()
 		do {
 			varnames += ExprNode.parseId(tr)
@@ -52,7 +52,7 @@ object DefaultTags {
 		for (part in chunks) {
 			when (part.tag.name) {
 				"if", "elseif" -> {
-					ifBranches += ExprNode.parse(part.tag.content) to part.body
+					ifBranches += part.tag.expr to part.body
 				}
 				"else" -> {
 					elseBranch = part.body
@@ -70,7 +70,7 @@ object DefaultTags {
 
 	val Import = Tag("import", setOf(), null) {
 		val part = chunks.first()
-		val s = ExprNode.Token.tokenize(part.tag.content)
+		val s = part.tag.tokens
 		val file = s.parseExpr()
 		s.expect("as")
 		val name = s.read().text
@@ -79,13 +79,13 @@ object DefaultTags {
 
 	val Include = Tag("include", setOf(), null) {
 		val part = chunks.first()
-		val fileName = ExprNode.parseExpr(part.tag.tokens)
+		val fileName = part.tag.expr
 		DefaultBlocks.BlockInclude(fileName)
 	}
 
 	val Macro = Tag("macro", setOf(), setOf("end", "endmacro")) {
 		val part = chunks[0]
-		val s = ExprNode.Token.tokenize(part.tag.content)
+		val s = part.tag.tokens
 		val funcname = s.parseId()
 		s.expect("(")
 		val params = s.parseIdList()
@@ -95,7 +95,7 @@ object DefaultTags {
 
 	val Set = Tag("set", setOf(), null) {
 		val main = chunks[0]
-		val tr = ExprNode.Token.tokenize(main.tag.content)
+		val tr = main.tag.tokens
 		val varname = ExprNode.parseId(tr)
 		ExprNode.expect(tr, "=")
 		val expr = ExprNode.parseExpr(tr)
@@ -108,18 +108,11 @@ object DefaultTags {
 		var defaultCase: Block? = null
 
 		for (part in this.chunks) {
-			val tagContent = part.tag.content
 			val body = part.body
 			when (part.tag.name) {
-				"switch" -> {
-					subject = ExprNode.parse(tagContent)
-				}
-				"case" -> {
-					cases += ExprNode.parse(tagContent) to body
-				}
-				"default" -> {
-					defaultCase = body
-				}
+				"switch" -> subject = part.tag.expr
+				"case" -> cases += part.tag.expr to body
+				"default" -> defaultCase = body
 			}
 		}
 		if (subject == null) error("No subject set in switch")

@@ -6,8 +6,6 @@ internal class Pool<T>(private val reset: (T) -> Unit = {}, preallocate: Int = 0
     private val items = arrayListOf<T>()
     private var lastId = 0
 
-    val itemsInPool: Int get() = items.size
-
     init {
         for (n in 0 until preallocate) items.add(gen(lastId++))
     }
@@ -19,11 +17,7 @@ internal class Pool<T>(private val reset: (T) -> Unit = {}, preallocate: Int = 0
         items.add(element)
     }
 
-    fun free(vararg elements: T) = run { for (element in elements) free(element) }
-
-    fun free(elements: Iterable<T>) = run { for (element in elements) free(element) }
-
-    inline fun <R> alloc(crossinline callback: (T) -> R): R {
+    inline fun <R> alloc(callback: (T) -> R): R {
         val temp = alloc()
         try {
             return callback(temp)
@@ -33,11 +27,3 @@ internal class Pool<T>(private val reset: (T) -> Unit = {}, preallocate: Int = 0
     }
 }
 
-internal inline fun <T, R> Pool<T>.alloc2(callback: (T) -> R): R {
-    val temp = alloc()
-    try {
-        return callback(temp)
-    } finally {
-        free(temp)
-    }
-}

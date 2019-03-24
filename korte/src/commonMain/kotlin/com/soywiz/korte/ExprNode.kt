@@ -29,10 +29,10 @@ interface ExprNode : DynamicContext {
         }
     }
 
-    data class FILTER(val name: String, val expr: ExprNode, val params: List<ExprNode>) : ExprNode {
+    data class FILTER(val name: String, val expr: ExprNode, val params: List<ExprNode>, val tok: ExprNode.Token) : ExprNode {
         override suspend fun eval(context: Template.EvalContext): Any? {
-            val filter = context.config.filters[name] ?: invalidOp("Unknown filter '$name'")
-            return context.filterCtxPool.alloc2 {
+            val filter = context.config.filters[name] ?: tok.exception("Unknown filter '$name'")
+            return context.filterCtxPool.alloc {
                 it.context = context
                 it.subject = expr.eval(context)
                 it.args = params.map { it.eval(context) }
@@ -116,8 +116,15 @@ interface ExprNode : DynamicContext {
     }
 
     companion object {
-        fun parse(str: String): ExprNode {
-            val tokens = ExprNode.Token.Companion.tokenize(str)
+        fun parse(tag: com.soywiz.korte.Token.TTag): ExprNode {
+            return parse(tag.content, tag.posContext)
+        }
+
+        fun parse(str: String, context: FilePosContext): ExprNode {
+            val tokens = ExprNode.Token.tokenize(str, context)
+            if (tokens.list.isEmpty() || tokens.list.first() is Token.TEnd) {
+                context.exception("No expression")
+            }
             return ExprNode.parseFullExpr(tokens)
         }
 
@@ -127,13 +134,13 @@ interface ExprNode : DynamicContext {
 
         fun expect(r: ListReader<Token>, vararg tokens: String) {
             val token = r.read()
-            if (token.text !in tokens) invalidOp("Expected ${tokens.joinToString(", ")} but found $token")
+            if (token.text !in tokens) token.exception("Expected ${tokens.joinToString(", ")} but found $token")
         }
 
         fun parseFullExpr(r: ListReader<Token>): ExprNode {
             val result = ExprNode.parseExpr(r)
             if (r.hasMore && r.peek() !is ExprNode.Token.TEnd) {
-                invalidOp("Expected expression at " + r.peek() + " :: " + r.list.map { it.text }.joinToString(""))
+                r.peek().exception("Expected expression at " + r.peek() + " :: " + r.list.map { it.text }.joinToString(""))
             }
             return result
         }
@@ -222,7 +229,7 @@ interface ExprNode : DynamicContext {
                         when (r.peek().text) {
                             "," -> r.read()
                             "]" -> continue@loop
-                            else -> invalidOp("Expected , or ]")
+                            else -> r.peek().exception("Expected , or ]")
                         }
                     }
                     r.expect("]")
@@ -240,7 +247,7 @@ interface ExprNode : DynamicContext {
                         when (r.peek().text) {
                             "," -> r.read()
                             "}" -> continue@loop
-                            else -> invalidOp("Expected , or }")
+                            else -> r.peek().exception("Expected , or }")
                         }
                     }
                     r.expect("}")
@@ -280,13 +287,13 @@ interface ExprNode : DynamicContext {
                         val expr = ExprNode.parseExpr(r)
                         construct = ACCESS(construct, expr)
                         val end = r.read()
-                        if (end.text != "]") throw RuntimeException("Expected ']' but found $end")
+                        if (end.text != "]") end.exception("Expected ']' but found $end")
                     }
                     "|" -> {
-                        r.read()
+                        val tok = r.read()
                         val name = r.read().text
                         val args = arrayListOf<ExprNode>()
-                        if (name.isEmpty()) invalidOp("Missing filter name")
+                        if (name.isEmpty()) tok.exception("Missing filter name")
                         if (r.hasMore && r.peek().text == "(") {
                             r.read()
                             callargsloop@ while (r.hasMore && r.peek().text != ")") {
@@ -298,7 +305,7 @@ interface ExprNode : DynamicContext {
                             }
                             r.expect(")")
                         }
-                        construct = FILTER(name, construct, args)
+                        construct = FILTER(name, construct, args, tok)
                     }
                     "(" -> {
                         r.read()
@@ -320,14 +327,14 @@ interface ExprNode : DynamicContext {
         }
     }
 
-    interface Token {
+    interface Token : TokenContext {
         val text: String
 
-        data class TId(override val text: String) : ExprNode.Token
-        data class TNumber(override val text: String) : ExprNode.Token
-        data class TString(override val text: String, val processedValue: String) : ExprNode.Token
-        data class TOperator(override val text: String) : ExprNode.Token
-        data class TEnd(override val text: String = "") : ExprNode.Token
+        data class TId(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
+        data class TNumber(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
+        data class TString(override val text: String, val processedValue: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
+        data class TOperator(override val text: String) : ExprNode.Token, TokenContext by TokenContext.Mixin()
+        data class TEnd(override val text: String = "") : ExprNode.Token, TokenContext by TokenContext.Mixin()
 
         companion object {
             private val OPERATORS = setOf(
@@ -345,33 +352,41 @@ interface ExprNode : DynamicContext {
                 "="
             )
 
-            fun tokenize(str: String): ListReader<Token> {
+            fun tokenize(str: String, context: FilePosContext): ListReader<Token> {
                 val r = StrReader(str)
                 val out = arrayListOf<ExprNode.Token>()
-                fun emit(str: ExprNode.Token) {
+                fun emit(str: ExprNode.Token, tpos: Int) {
+                    str.pos = context.pos + tpos
+                    str.file = context.file
                     out += str
                 }
                 while (r.hasMore) {
                     val start = r.pos
                     r.skipSpaces()
+                    val dstart = r.pos
                     val id = r.readWhile(Char::isLetterDigitOrUnderscore)
                     if (id.isNotEmpty()) {
-                        if (id[0].isDigit()) emit(ExprNode.Token.TNumber(id)) else emit(ExprNode.Token.TId(id))
+                        if (id[0].isDigit()) emit(ExprNode.Token.TNumber(id), dstart) else emit(ExprNode.Token.TId(id), dstart)
                     }
                     r.skipSpaces()
-                    if (r.peek(3) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(3)))
-                    if (r.peek(2) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(2)))
-                    if (r.peek(1) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(1)))
+                    val dstart2 = r.pos
+                    if (r.peek(3) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(3)), dstart2)
+                    if (r.peek(2) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(2)), dstart2)
+                    if (r.peek(1) in ExprNode.Token.OPERATORS) emit(ExprNode.Token.TOperator(r.read(1)), dstart2)
                     if (r.peek() == '\'' || r.peek() == '"') {
+                        val dstart3 = r.pos
                         val strStart = r.read()
-                        val strBody = r.readUntil(strStart) ?: ""
+                        val strBody = r.readUntil(strStart) ?: context.withPosAdd(dstart3).exception("String literal not closed")
                         val strEnd = r.read()
-                        emit(ExprNode.Token.TString(strStart + strBody + strEnd, strBody.unescape()))
+                        emit(ExprNode.Token.TString(strStart + strBody + strEnd, strBody.unescape()), dstart3)
                     }
                     val end = r.pos
-                    if (end == start) invalidOp("Don't know how to handle '${r.peek()}'")
+                    if (end == start) {
+                        context.withPosAdd(end).exception("Don't know how to handle '${r.peek()}'")
+                    }
                 }
-                emit(ExprNode.Token.TEnd())
+                val dstart = r.pos
+                emit(ExprNode.Token.TEnd(), dstart)
                 return ListReader(out)
             }
         }
