@@ -5,15 +5,15 @@
 [![Build Status](https://travis-ci.org/korlibs/korte.svg?branch=master)](https://travis-ci.org/korlibs/korte)
 [![Maven Version](https://img.shields.io/github/tag/korlibs/korte.svg?style=flat&label=maven)](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22korte%22)
 
-KorTE is a asynchronous template engine for Multiplatform Kotlin 1.3.
+KorTE is an asynchronous templating engine for Multiplatform Kotlin 1.3+.
 
-It is a non-strict super set of twig / django / atpl.js template engines and can support liquid templaet engine too with frontmatter.
+It is a non-strict super set of twig / django / atpl.js template engines and can support liquid templating engine as well with frontmatter.
 
-It has out of the box support for ktor and vert.x.
+It has out of the box support for [ktor](https://ktor.io/) and [vert.x](https://vertx.io/).
 
-It works on JVM and JS out of the box. But can also work on Native when using untyped model data or making models to implement the DynamicType interface.
+It works on JVM and JS out of the box. And on Native with untyped model data or by making the models implement the [DynamicType](https://github.com/korlibs/korte/blob/7461aa4b7dc496ff1c0e986cdb2c7843891ba325/korte/src/commonMain/kotlin/com/soywiz/korte/dynamic/DynamicType.kt#L61) interface.
 
-It allows to call suspend methods from within templates.
+Because asynchornity is in its name and soul, it allows to call *suspend*ing methods from within your templates.
 
 ## Documentation:
 
@@ -26,14 +26,14 @@ It allows to call suspend methods from within templates.
 
 ## Example
 
-### `_base.html`
+### `resources/views/_base.html`
 ```liquid
 <html><head></head><body>
 {% block content %}default content{% endblock %}
 </body></html>
 ```
 
-### `_two_columns.html`
+### `resources/views/_two_columns.html`
 ```liquid
 {% extends "_base.html" %}
 {% block content %}
@@ -42,7 +42,7 @@ It allows to call suspend methods from within templates.
 {% endblock %}
 ```
 
-### `index.html`
+### `resources/views/index.html`
 ```liquid
 {% extends "_two_columns.html" %}
 {% block left %}
@@ -56,6 +56,14 @@ It allows to call suspend methods from within templates.
 ### `code.kt`
 
 ```kotlin
-val templates = Templates(resourcesVfs)
-println(templates.render("index.html", mapOf("name" to "world")))
+val renderer = Templates(ResourceTemplateProvider("views"), cache = true)
+val output = templates.render("index.html", mapOf("name" to "world"))
+println(output)
+
+class ResourceTemplateProvider(private val basePath: String) : TemplateProvider {
+     override suspend fun get(template: String): String? {
+         return this::class.java.classLoader.getResource(Paths.get(basePath, template).toString()).readText()
+     }
+ }
+
 ```
