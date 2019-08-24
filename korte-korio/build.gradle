@@ -5,5 +5,5 @@ korlibs {
 }
 
 dependencies {
-	implementation("com.soywiz.korlibs.korio:korio:$korioVersion")
+	commonMainApi("com.soywiz.korlibs.korio:korio:$korioVersion")
 }
