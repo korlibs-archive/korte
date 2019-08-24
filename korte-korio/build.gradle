@@ -2,5 +2,8 @@ apply plugin: com.soywiz.korlibs.KorlibsPlugin
 
 korlibs {
     dependencyProject(":korte")
-    dependencyMulti("com.soywiz.korlibs.korio:korio:$korioVersion")
+}
+
+dependencies {
+	implementation("com.soywiz.korlibs.korio:korio:$korioVersion")
 }
