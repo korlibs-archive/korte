@@ -1,6 +1,23 @@
-# Kotlin cORoutines Template Engine
+<p align="center"><img alt="Korte" src="https://raw.githubusercontent.com/korlibs/korlibs-logos/master/128/korte.png" /></p>
 
-![](https://raw.githubusercontent.com/korlibs/korlibs-logos/master/128/korte.png)
+<h2 align="center">Korte</h2>
+<p align="center">Template Engine for Multiplatform Kotlin</p>
+
+<!-- BADGES -->
+<p align="center">
+	<a href="https://travis-ci.org/korlibs/korte"><img alt="Build Status" src="https://travis-ci.org/korlibs/korte.svg?branch=master" /></a>
+	<a href="http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22korte%22"><img alt="Maven Version" src="https://img.shields.io/github/tag/korlibs/korte.svg?style=flat&label=maven" /></a>
+	<a href="https://slack.soywiz.com/"><img alt="Slack" src="https://img.shields.io/badge/chat-on%20slack-green?style=flat&logo=slack" /></a>
+</p>
+<!-- /BADGES -->
+
+<!-- SUPPORT -->
+<h2 align="center">Support korte</h2>
+<p align="center">
+If you like korte, or want your company logo here, please consider <a href="https://github.com/sponsors/soywiz">becoming a sponsor ★</a>,<br />
+in addition to ensure the continuity of the project, you will get exclusive content.
+</p>
+<!-- /SUPPORT -->
 
 [![Build Status](https://travis-ci.org/korlibs/korte.svg?branch=master)](https://travis-ci.org/korlibs/korte)
 [![Maven Version](https://img.shields.io/github/tag/korlibs/korte.svg?style=flat&label=maven)](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22korte%22)
