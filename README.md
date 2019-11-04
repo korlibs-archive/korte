@@ -1,6 +1,6 @@
 <p align="center"><img alt="Korte" src="https://raw.githubusercontent.com/korlibs/korlibs-logos/master/128/korte.png" /></p>
 
-<h2 align="center">Korte</h2>
+<h1 align="center">Korte</h1>
 <p align="center">Template Engine for Multiplatform Kotlin</p>
 
 <!-- BADGES -->
@@ -18,9 +18,6 @@ If you like korte, or want your company logo here, please consider <a href="http
 in addition to ensure the continuity of the project, you will get exclusive content.
 </p>
 <!-- /SUPPORT -->
-
-[![Build Status](https://travis-ci.org/korlibs/korte.svg?branch=master)](https://travis-ci.org/korlibs/korte)
-[![Maven Version](https://img.shields.io/github/tag/korlibs/korte.svg?style=flat&label=maven)](http://search.maven.org/#search%7Cga%7C1%7Ca%3A%22korte%22)
 
 KorTE is an asynchronous templating engine for Multiplatform Kotlin 1.3+.
 
