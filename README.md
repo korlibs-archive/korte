@@ -19,6 +19,8 @@ in addition to ensure the continuity of the project, you will get exclusive cont
 </p>
 <!-- /SUPPORT -->
 
+## Info:
+
 KorTE is an asynchronous templating engine for Multiplatform Kotlin 1.3+.
 
 It is a non-strict super set of twig / django / atpl.js template engines and can support liquid templating engine as well with frontmatter.
