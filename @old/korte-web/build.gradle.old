@@ -2,7 +2,7 @@ apply plugin: 'kotlin'
 
 dependencies {
     compile project(":korte")
-    compile "com.soywiz:korio-ext-web:$korioVersion"
+    compile "com.soywiz.korlibs.korio:korio-ext-web:$korioVersion"
 }
 
 configurations {

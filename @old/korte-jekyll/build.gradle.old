@@ -5,7 +5,7 @@ apply plugin: 'application'
 mainClassName = "com.soywiz.korte.jekyll.KorteJekyll"
 
 dependencies {
-    compile "com.soywiz:korio-jvm:$korioVersion"
+    compile "com.soywiz.korlibs.korio:korio-jvm:$korioVersion"
     //compile "io.vertx:vertx-core:$vertxVersion"
 }
 
