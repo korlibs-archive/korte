@@ -406,7 +406,7 @@ interface ExprNode : DynamicContext {
 }
 
 fun ListReader<ExprNode.Token>.expectEnd() {
-    if (hasMore) peek().exception("Unexpected token")
+    if (hasMore) peek().exception("Unexpected token '${peek().text}'")
 }
 
 fun ListReader<ExprNode.Token>.tryRead(vararg types: String): ExprNode.Token? {

@@ -108,6 +108,10 @@ object DefaultTags {
 		DefaultBlocks.BlockSet(varname, expr)
 	}
 
+    val Assign = Tag("assign", setOf(), null) {
+        Set.buildNode(this)
+    }
+
 	val Switch = Tag("switch", setOf("case", "default"), setOf("endswitch")) {
 		var subject: ExprNode? = null
 		val cases = arrayListOf<Pair<ExprNode, Block>>()
@@ -141,6 +145,8 @@ object DefaultTags {
 	val ALL = listOf(
 		BlockTag,
 		Capture, Debug,
-		Empty, Extends, For, If, Switch, Import, Include, Macro, Set
+		Empty, Extends, For, If, Switch, Import, Include, Macro, Set,
+        // Liquid
+        Assign
 	)
 }

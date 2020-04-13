@@ -400,7 +400,7 @@ class TemplateTest : BaseTest() {
     @Test fun testInvalid1() = suspendTest { expectException<KorteException>("String literal not closed at template:1:3") { Template("{{ ' }}")() } }
     @Test fun testInvalid2() = suspendTest { expectException<KorteException>("No expression at template:1:3") { Template("{{ }}")() } }
     @Test fun testInvalid3() = suspendTest { expectException<KorteException>("Expected expression at template:1:5") { Template("{{ 1 + }}")() } }
-    @Test fun testInvalid4() = suspendTest { expectException<KorteException>("Unexpected token at template:1:13") { Template("{% set a = hello world %}")() } }
+    @Test fun testInvalid4() = suspendTest { expectException<KorteException>("Unexpected token 'world' at template:1:13") { Template("{% set a = hello world %}")() } }
     @Test fun testInvalid5() = suspendTest { expectException<KorteException>("Expected id at template:1:3") { Template("{% set %}")() } }
     @Test fun testInvalid6() = suspendTest { expectException<KorteException>("Expected = but found end at template:1:3") { Template("{% set a %}")() } }
     @Test fun testInvalid7() = suspendTest { expectException<KorteException>("Expected expression at template:1:5") { Template("{% set a = %}")() } }
