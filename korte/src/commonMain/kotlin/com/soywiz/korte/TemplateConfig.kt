@@ -33,6 +33,10 @@ open class TemplateConfig(
     fun register(vararg its: Tag) = this.apply { for (it in its) tags[it.name] = it }
     fun register(vararg its: Filter) = this.apply { for (it in its) filters[it.name] = it }
     fun register(vararg its: TeFunction) = this.apply { for (it in its) functions[it.name] = it }
+
+    var writeBlockExpressionResult: suspend Template.EvalContext.(eval: Any?) -> Unit = { value ->
+        this.write(value.toEscapedString())
+    }
 }
 
 open class TemplateConfigWithTemplates(

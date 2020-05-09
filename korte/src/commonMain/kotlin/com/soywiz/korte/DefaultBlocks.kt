@@ -36,7 +36,7 @@ object DefaultBlocks {
 
     data class BlockExpr(val expr: ExprNode) : Block {
         override suspend fun eval(context: Template.EvalContext) {
-            context.write(expr.eval(context).toEscapedString())
+            context.config.writeBlockExpressionResult(context, expr.eval(context))
         }
     }
 
