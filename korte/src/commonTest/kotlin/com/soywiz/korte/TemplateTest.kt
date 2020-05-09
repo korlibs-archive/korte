@@ -397,6 +397,18 @@ class TemplateTest : BaseTest() {
         expectException<KorteException>("Missing filter name at template:1:6") { Template("{{ 'a'| }}")() }
     }
 
+    @Test
+    fun testCustomBlockWriter() = suspendTest {
+        val config = TemplateConfig().also {
+            it.replaceWriteBlockExpressionResult { value, previous ->
+                if (value == null) throw NullPointerException("null")
+                previous(value)
+            }
+        }
+        assertEquals("a", Template("{{ 'a' }}", config)())
+        expectException<NullPointerException>("null") { Template("{{ null }}", config)() }
+    }
+
     @Test fun testInvalid1() = suspendTest { expectException<KorteException>("String literal not closed at template:1:3") { Template("{{ ' }}")() } }
     @Test fun testInvalid2() = suspendTest { expectException<KorteException>("No expression at template:1:3") { Template("{{ }}")() } }
     @Test fun testInvalid3() = suspendTest { expectException<KorteException>("Expected expression at template:1:5") { Template("{{ 1 + }}")() } }
@@ -413,7 +425,6 @@ class TemplateTest : BaseTest() {
                 "_macros.html" to "{% macro putUserLink(user) %}<a>{{ user }}</a>{% endmacro %}"
             )
         )
-
         assertEquals("<a>hello</a>", templates.get("root.html").invoke(hashMapOf<Any, Any?>()))
     }
 }
