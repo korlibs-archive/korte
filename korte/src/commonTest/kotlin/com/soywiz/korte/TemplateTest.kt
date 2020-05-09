@@ -401,12 +401,12 @@ class TemplateTest : BaseTest() {
     fun testCustomBlockWriter() = suspendTest {
         val config = TemplateConfig().also {
             it.replaceWriteBlockExpressionResult { value, previous ->
-                if (value == null) throw error("null")
+                if (value == null) throw NullPointerException("null")
                 previous(value)
             }
         }
         assertEquals("a", Template("{{ 'a' }}", config)())
-        expectException<Exception>("null") { Template("{{ null }}", config)() }
+        expectException<NullPointerException>("null") { Template("{{ null }}", config)() }
     }
 
     @Test fun testInvalid1() = suspendTest { expectException<KorteException>("String literal not closed at template:1:3") { Template("{{ ' }}")() } }
