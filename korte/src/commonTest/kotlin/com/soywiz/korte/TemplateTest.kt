@@ -400,9 +400,9 @@ class TemplateTest : BaseTest() {
     @Test
     fun testCustomBlockWriter() = suspendTest {
         val config = TemplateConfig().also {
-            it.writeBlockExpressionResult = { value ->
+            it.replaceWriteBlockExpressionResult { value, previous ->
                 if (value == null) throw error("Not null")
-                this.write(value.toEscapedString())
+                previous(value)
             }
         }
         assertEquals("a", Template("{{ 'a' }}", config)())
