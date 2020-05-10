@@ -9,7 +9,9 @@ interface ExprNode : DynamicContext {
 
     data class VAR(val name: String) : ExprNode {
         override suspend fun eval(context: Template.EvalContext): Any? {
-            return context.scope.get(name)
+            val value = context.scope.get(name)
+            context.config.variablePreprocessor?.invoke(name, value)
+            return value
         }
     }
 
