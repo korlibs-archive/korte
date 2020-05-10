@@ -412,8 +412,8 @@ class TemplateTest : BaseTest() {
     @Test
     fun testCustomVariablePreprocessor() = suspendTest {
         val config = TemplateConfig().also {
-            it.variablePreprocessor = { name: String, value: Any? ->
-                if (value == null) throw NullPointerException("Variable: $name cannot be null.")
+            it.replaceVariablePocessor { name, previous ->
+                previous(name) ?: throw NullPointerException("Variable: $name cannot be null.")
             }
         }
         assertEquals("a", Template("{{ var1 }}", config)(mapOf("var1" to "a")))
