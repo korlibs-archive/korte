@@ -1,3 +1,3 @@
 package com.soywiz.korte.internal
 
-internal const val KORTE_VERSION = "1.10.3"
+internal const val KORTE_VERSION = "1.10.4-SNAPSHOT"
