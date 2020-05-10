@@ -34,6 +34,17 @@ open class TemplateConfig(
     fun register(vararg its: Filter) = this.apply { for (it in its) filters[it.name] = it }
     fun register(vararg its: TeFunction) = this.apply { for (it in its) functions[it.name] = it }
 
+    var variableProcessor: VariableProcessor = { name ->
+        scope.get(name)
+    }
+
+    fun replaceVariablePocessor(func: suspend Template.EvalContext.(name: String, previous: VariableProcessor) -> Any?) {
+        val previous = variableProcessor
+        variableProcessor = { eval ->
+            this.func(eval, previous)
+        }
+    }
+
     var writeBlockExpressionResult: WriteBlockExpressionResultFunction = { value ->
         this.write(value.toEscapedString())
     }
@@ -47,6 +58,7 @@ open class TemplateConfig(
 }
 
 typealias WriteBlockExpressionResultFunction = suspend Template.EvalContext.(value: Any?) -> Unit
+typealias VariableProcessor = suspend Template.EvalContext.(name: String) -> Any?
 
 open class TemplateConfigWithTemplates(
     extraTags: List<Tag> = listOf(),

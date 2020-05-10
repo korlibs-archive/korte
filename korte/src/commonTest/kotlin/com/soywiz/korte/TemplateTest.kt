@@ -409,6 +409,17 @@ class TemplateTest : BaseTest() {
         expectException<NullPointerException>("null") { Template("{{ null }}", config)() }
     }
 
+    @Test
+    fun testCustomVariablePreprocessor() = suspendTest {
+        val config = TemplateConfig().also {
+            it.replaceVariablePocessor { name, previous ->
+                previous(name) ?: throw NullPointerException("Variable: $name cannot be null.")
+            }
+        }
+        assertEquals("a", Template("{{ var1 }}", config)(mapOf("var1" to "a")))
+        expectException<NullPointerException>("Variable: var2 cannot be null.") { Template("{{ var2 }}", config)() }
+    }
+
     @Test fun testInvalid1() = suspendTest { expectException<KorteException>("String literal not closed at template:1:3") { Template("{{ ' }}")() } }
     @Test fun testInvalid2() = suspendTest { expectException<KorteException>("No expression at template:1:3") { Template("{{ }}")() } }
     @Test fun testInvalid3() = suspendTest { expectException<KorteException>("Expected expression at template:1:5") { Template("{{ 1 + }}")() } }
