@@ -82,9 +82,18 @@ object DefaultTags {
 	}
 
 	val Include = Tag("include", setOf(), null) {
-		val part = chunks.first()
-		val fileName = part.tag.expr
-		DefaultBlocks.BlockInclude(fileName)
+		val main = chunks.first()
+        val tr = main.tag.tokens
+        val expr = ExprNode.parseExpr(tr)
+        val params = linkedMapOf<String, ExprNode>()
+        while (tr.hasMore) {
+            val id = ExprNode.parseId(tr)
+            tr.expect("=")
+            val expr = ExprNode.parseExpr(tr)
+            params[id] = expr
+        }
+        tr.expectEnd()
+		DefaultBlocks.BlockInclude(expr, params)
 	}
 
 	val Macro = Tag("macro", setOf(), setOf("end", "endmacro")) {

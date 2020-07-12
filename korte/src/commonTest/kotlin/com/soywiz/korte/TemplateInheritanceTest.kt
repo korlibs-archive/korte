@@ -125,6 +125,19 @@ class TemplateInheritanceTest {
     }
 
     @Test
+    fun includeWithParams() = suspendTest {
+        assertEquals(
+            "Hello World.",
+            Templates(
+                TemplateProvider(
+                    "include" to """{{ include.name }}""",
+                    "main" to """Hello {% include "include" name="World" %}."""
+                )
+            ).get("main")()
+        )
+    }
+
+    @Test
     fun jekyllLayout() = suspendTest {
         assertEquals(
             "Hello Carlos.",

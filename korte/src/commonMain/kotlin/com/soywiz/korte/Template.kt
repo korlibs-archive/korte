@@ -190,10 +190,10 @@ class Template internal constructor(
 
         inline fun captureRaw(callback: () -> Unit): RawString = RawString(capture(callback))
 
-        inline fun <T> createScope(callback: () -> T): T {
+        inline fun <T> createScope(content: MutableMap<*, *> = LinkedHashMap<Any?, Any?>(), callback: () -> T): T {
             val old = this.scope
             try {
-                this.scope = Template.Scope(hashMapOf<Any?, Any?>(), mapper, old)
+                this.scope = Template.Scope(content, mapper, old)
                 return callback()
             } finally {
                 this.scope = old

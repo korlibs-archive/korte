@@ -107,10 +107,17 @@ object DefaultBlocks {
         }
     }
 
-    data class BlockInclude(val fileNameExpr: ExprNode) : Block {
+    data class BlockInclude(
+        val fileNameExpr: ExprNode,
+        val params: LinkedHashMap<String, ExprNode>
+    ) : Block {
         override suspend fun eval(context: Template.EvalContext) {
             val fileName = fileNameExpr.eval(context).toDynamicString()
-            Template.TemplateEvalContext(context.templates.getInclude(fileName)).eval(context)
+            val evalParams = params.mapValues { it.value.eval(context) }.toMutableMap()
+            context.createScope {
+                context.scope.set("include", evalParams)
+                Template.TemplateEvalContext(context.templates.getInclude(fileName)).eval(context)
+            }
         }
     }
 
