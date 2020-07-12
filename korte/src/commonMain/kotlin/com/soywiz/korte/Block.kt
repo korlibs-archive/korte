@@ -45,7 +45,7 @@ interface Block : DynamicContext {
                                     }
                                 }
                             }
-                            children += DefaultBlocks.BlockText(text)
+                            children += DefaultBlocks.BlockText(parseContext.template.templateContent.chunkProcessor(text))
                         }
                         is Token.TExpr -> {
                             children += DefaultBlocks.BlockExpr(ExprNode.parse(it.content, it.posContext))

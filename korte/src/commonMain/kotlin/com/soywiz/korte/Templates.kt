@@ -4,9 +4,9 @@ import com.soywiz.korte.internal.*
 import com.soywiz.korte.util.*
 
 open class Templates(
-    var root: TemplateProvider,
-    var includes: TemplateProvider = root,
-    var layouts: TemplateProvider = root,
+    var root: NewTemplateProvider,
+    var includes: NewTemplateProvider = root,
+    var layouts: NewTemplateProvider = root,
     val config: TemplateConfig = TemplateConfig(),
     var cache: Boolean = true
 ) {
@@ -24,15 +24,15 @@ open class Templates(
     }
 
     open suspend fun getInclude(name: String): Template = cache("include/$name") {
-        Template(name, this@Templates, includes.getSure(name), config).init()
+        Template(name, this@Templates, includes.newGetSure(name), config).init()
     }
 
     open suspend fun getLayout(name: String): Template = cache("layout/$name") {
-        Template(name, this@Templates, layouts.getSure(name), config).init()
+        Template(name, this@Templates, layouts.newGetSure(name), config).init()
     }
 
     open suspend fun get(name: String): Template = cache("base/$name") {
-        Template(name, this@Templates, root.getSure(name), config).init()
+        Template(name, this@Templates, root.newGetSure(name), config).init()
     }
 
     suspend fun render(name: String, vararg args: Pair<String, Any?>): String = get(name).invoke(*args)

@@ -5,12 +5,19 @@ import com.soywiz.korte.internal.*
 import com.soywiz.korte.util.*
 import kotlin.collections.set
 
+open class TemplateContent(
+    val text: String,
+    val contentType: String = "html",
+    val chunkProcessor: ((String) -> String) = { it }
+)
+
 class Template internal constructor(
     val name: String,
     val templates: Templates,
-    val template: String,
+    val templateContent: TemplateContent,
     val config: TemplateConfig = TemplateConfig()
 ) {
+    val template get() = templateContent.text
     // @TODO: Move to parse plugin + extra
     var frontMatter: Map<String, Any?>? = null
 

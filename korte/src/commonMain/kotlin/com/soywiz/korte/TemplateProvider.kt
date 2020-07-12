@@ -1,10 +1,18 @@
 package com.soywiz.korte
 
-interface TemplateProvider {
+interface NewTemplateProvider {
+    suspend fun newGet(template: String): TemplateContent?
+}
+
+interface TemplateProvider : NewTemplateProvider {
 	class NotFoundException(val template: String) : RuntimeException("Can't find template '$template'")
 
+    override suspend fun newGet(template: String): TemplateContent? = get(template)?.let { TemplateContent(it) }
 	suspend fun get(template: String): String?
 }
+
+suspend fun NewTemplateProvider.newGetSure(template: String) = newGet(template)
+    ?: throw TemplateProvider.NotFoundException(template)
 
 suspend fun TemplateProvider.getSure(template: String) = get(template)
     ?: throw TemplateProvider.NotFoundException(template)

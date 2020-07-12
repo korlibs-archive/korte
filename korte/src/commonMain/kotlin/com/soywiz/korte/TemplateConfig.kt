@@ -67,7 +67,7 @@ open class TemplateConfigWithTemplates(
 ) : TemplateConfig(extraTags, extraFilters, extraFunctions) {
     var templates = Templates(TemplateProvider(mapOf()), config = this)
     fun cache(value: Boolean) = this.apply { templates.cache = value }
-    fun root(root: TemplateProvider, includes: TemplateProvider = root, layouts: TemplateProvider = root) =
+    fun root(root: NewTemplateProvider, includes: NewTemplateProvider = root, layouts: NewTemplateProvider = root) =
         this.apply {
             templates.root = root
             templates.includes = includes
