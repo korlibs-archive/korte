@@ -37,7 +37,8 @@ interface Block : DynamicContext {
                                     if (index >= 0) {
                                         val yamlLines = slines.slice(0 until index)
                                         val outside = slines.slice(index + 1 until slines.size)
-                                        val yaml = Yaml.read(yamlLines.joinToString("\n"))
+                                        val yamlText = yamlLines.joinToString("\n")
+                                        val yaml = Yaml.read(yamlText)
                                         if (yaml is Map<*, *>) {
                                             parseContext.template.frontMatter = yaml as Map<String, Any?>
                                         }
