@@ -141,6 +141,7 @@ object Dynamic2 : DynamicContext {
 
     fun toIterable(it: Any?): Iterable<*> = when (it) {
         null -> listOf<Any?>()
+        //is Dynamic2Iterable -> it.dynamic2Iterate()
         is Iterable<*> -> it
         is CharSequence -> it.toList()
         is Map<*, *> -> it.toList()
@@ -149,6 +150,7 @@ object Dynamic2 : DynamicContext {
 
     suspend fun accessAny(instance: Any?, key: Any?, mapper: ObjectMapper2): Any? = when (instance) {
         null -> null
+        is Dynamic2Gettable -> instance.dynamic2Get(key)
         is Map<*, *> -> instance[key]
         is Iterable<*> -> instance.toList()[toInt(key)]
         else -> {
@@ -172,6 +174,7 @@ object Dynamic2 : DynamicContext {
 
     suspend fun setAny(instance: Any?, key: Any?, value: Any?, mapper: ObjectMapper2): Unit = when (instance) {
         null -> Unit
+        is Dynamic2Settable -> instance.dynamic2Set(key, value)
         is MutableMap<*, *> -> (instance as MutableMap<Any?, Any?>).set(key, value)
         is MutableList<*> -> (instance as MutableList<Any?>)[toInt(key)] = value
         else -> {
@@ -196,6 +199,7 @@ object Dynamic2 : DynamicContext {
 
     suspend fun callAny(any: Any?, methodName: Any?, args: List<Any?>, mapper: ObjectMapper2): Any? = when (any) {
         null -> null
+        any is Dynamic2Callable -> (any as Dynamic2Callable).dynamic2Call(methodName, args)
         else -> mapper.invokeAsync(any::class as KClass<Any>, any, methodName.toDynamicString(), args)
     }
 
@@ -222,3 +226,19 @@ interface DynamicContext {
 }
 
 inline fun <T> DynamicContext(callback: DynamicContext.() -> T): T = callback(Dynamic2)
+
+interface Dynamic2Gettable {
+    suspend fun dynamic2Get(key: Any?): Any?
+}
+
+interface Dynamic2Settable {
+    suspend fun dynamic2Set(key: Any?, value: Any?)
+}
+
+interface Dynamic2Callable {
+    suspend fun dynamic2Call(methodName: Any?, params: List<Any?>): Any?
+}
+
+//interface Dynamic2Iterable {
+//    suspend fun dynamic2Iterate(): Iterable<Any?>
+//}
