@@ -154,7 +154,10 @@ interface ExprNode : DynamicContext {
             listOf("==", "!=", "<", ">", "<=", ">=", "<=>"),
             listOf("&&"),
             listOf("||"),
+            listOf("and"),
+            listOf("or"),
             listOf("in"),
+            listOf("contains"),
             listOf(".."),
             listOf("?:")
         )

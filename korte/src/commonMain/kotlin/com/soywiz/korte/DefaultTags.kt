@@ -50,28 +50,41 @@ object DefaultTags {
 		DefaultBlocks.BlockFor(varnames, expr, main.body, elseTag)
 	}
 
-	val If = Tag("if", setOf("else", "elseif"), setOf("end", "endif")) {
-		val ifBranches = arrayListOf<Pair<ExprNode, Block>>()
-		var elseBranch: Block? = null
+    fun Tag.BuildContext.BuildIf(isIf: Boolean): Block {
+        class Branch(val part: Tag.Part) {
+            val expr get() = part.tag.expr
+            val body get() = part.body
+            val realExpr get() = if (part.tag.name.contains("unless")) {
+                ExprNode.UNOP(expr, "!")
+            } else {
+                expr
+            }
+        }
 
-		for (part in chunks) {
-			when (part.tag.name) {
-				"if", "elseif" -> {
-					ifBranches += part.tag.expr to part.body
-				}
-				"else" -> {
-					elseBranch = part.body
-				}
-			}
-		}
-		val ifBranchesRev = ifBranches.reversed()
-		var node: Block = DefaultBlocks.BlockIf(ifBranchesRev.first().first, ifBranchesRev.first().second, elseBranch)
-		for (branch in ifBranchesRev.takeLast(ifBranchesRev.size - 1)) {
-			node = DefaultBlocks.BlockIf(branch.first, branch.second, node)
-		}
+        val branches = arrayListOf<Branch>()
+        var elseBranch: Block? = null
 
-		node
-	}
+        for (part in chunks) {
+            when (part.tag.name) {
+                "if", "elseif", "unless", "elseunless" -> branches += Branch(part)
+                "else" -> elseBranch = part.body
+            }
+        }
+
+
+        val branchesRev = branches.reversed()
+        val firstBranch = branchesRev.first()
+
+        var node: Block = DefaultBlocks.BlockIf(firstBranch.realExpr, firstBranch.body, elseBranch)
+        for (branch in branchesRev.takeLast(branchesRev.size - 1)) {
+            node = DefaultBlocks.BlockIf(branch.realExpr, branch.body, node)
+        }
+
+        return node
+    }
+
+	val If = Tag("if", setOf("else", "elseif", "elseunless"), setOf("end", "endif")) { BuildIf(isIf = true) }
+    val Unless = Tag("unless", setOf("else", "elseif", "elseunless"), setOf("end", "endunless")) { BuildIf(isIf = true) }
 
 	val Import = Tag("import", setOf(), null) {
 		val part = chunks.first()
@@ -156,7 +169,7 @@ object DefaultTags {
 	val ALL = listOf(
 		BlockTag,
 		Capture, Debug,
-		Empty, Extends, For, If, Switch, Import, Include, Macro, Set,
+		Empty, Extends, For, If, Unless, Switch, Import, Include, Macro, Set,
         // Liquid
         Assign
 	)

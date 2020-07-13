@@ -28,10 +28,11 @@ object Dynamic2 : DynamicContext {
         "%" -> toDouble(l) % toDouble(r)
         "**" -> toDouble(l).pow(toDouble(r))
         "&" -> toInt(l) and toInt(r)
-        "or" -> toInt(l) or toInt(r)
         "^" -> toInt(l) xor toInt(r)
         "&&" -> toBool(l) && toBool(r)
         "||" -> toBool(l) || toBool(r)
+        "and" -> toBool(l) && toBool(r)
+        "or" -> toBool(l) || toBool(r)
         "==" -> {
             if (l is Number && r is Number) {
                 l.toDouble() == r.toDouble()
@@ -51,6 +52,7 @@ object Dynamic2 : DynamicContext {
         ">" -> compare(l, r) > 0
         ">=" -> compare(l, r) >= 0
         "in" -> contains(r, l)
+        "contains" -> contains(l, r)
         "?:" -> if (toBool(l)) l else r
         else -> error("Not implemented binary operator '$op'")
     }
@@ -64,6 +66,7 @@ object Dynamic2 : DynamicContext {
     }
 
     fun contains(collection: Any?, element: Any?): Boolean = when (collection) {
+        is String -> collection.contains(element.toString())
         is Set<*> -> element in collection
         else -> element in toList(collection)
     }

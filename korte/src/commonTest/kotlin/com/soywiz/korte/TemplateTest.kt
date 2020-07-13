@@ -44,6 +44,34 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testAnd() = suspendTest {
+        assertEquals("true", Template("{{ 1 and 2 }}")())
+        assertEquals("false", Template("{{ 0 and 0 }}")())
+        assertEquals("false", Template("{{ 0 and 1 }}")())
+        assertEquals("false", Template("{{ 1 and 0 }}")())
+    }
+
+    @Test
+    fun testOr() = suspendTest {
+        assertEquals("true", Template("{{ 1 or 2 }}")())
+        assertEquals("false", Template("{{ 0 or 0 }}")())
+        assertEquals("true", Template("{{ 0 or 1 }}")())
+        assertEquals("true", Template("{{ 1 or 0 }}")())
+    }
+
+    @Test
+    fun testIn() = suspendTest {
+        assertEquals("true", Template("{{ 'soy' in name }}")("name" to "soywiz"))
+        assertEquals("false", Template("{{ 'demo' in name }}")("name" to "soywiz"))
+    }
+
+    @Test
+    fun testContains() = suspendTest {
+        assertEquals("true", Template("{{ name contains 'soy' }}")("name" to "soywiz"))
+        assertEquals("false", Template("{{ name contains 'demo' }}")("name" to "soywiz"))
+    }
+
+    @Test
     fun testFor() = suspendTest {
         val tpl = Template("{% for n in numbers %}{{ n }}{% end %}")
         assertEquals("", tpl("numbers" to listOf<Int>()))
@@ -102,6 +130,15 @@ class TemplateTest : BaseTest() {
         assertEquals("false", Template("{% if cond %}true{% else %}false{% end %}")("cond" to 0))
         assertEquals("true", Template("{% if cond %}true{% end %}")("cond" to 1))
         assertEquals("", Template("{% if cond %}true{% end %}")("cond" to 0))
+    }
+
+    @Test
+    fun testSimpleUnless() = suspendTest {
+        assertEquals("1false", Template("{% unless cond %}1true{% else %}1false{% end %}")("cond" to 1))
+        assertEquals("2true", Template("{% unless cond %}2true{% else %}2false{% end %}")("cond" to 0))
+        assertEquals("3true", Template("{% unless !cond %}3true{% end %}")("cond" to 1))
+        assertEquals("4true", Template("{% unless cond %}4true{% end %}")("cond" to 0))
+        assertEquals("", Template("{% unless !cond %}5true{% end %}")("cond" to 0))
     }
 
     @Test
