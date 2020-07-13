@@ -65,10 +65,13 @@ object Dynamic2 : DynamicContext {
         else -> error("Not implemented unary operator $op")
     }
 
-    fun contains(collection: Any?, element: Any?): Boolean = when (collection) {
-        is String -> collection.contains(element.toString())
-        is Set<*> -> element in collection
-        else -> element in toList(collection)
+    fun contains(collection: Any?, element: Any?): Boolean {
+        if (collection == element) return true
+        return when (collection) {
+            is String -> collection.contains(element.toString())
+            is Set<*> -> element in collection
+            else -> element in toList(collection)
+        }
     }
 
     fun compare(l: Any?, r: Any?): Int {
@@ -210,9 +213,35 @@ object Dynamic2 : DynamicContext {
 }
 
 interface DynamicContext {
+    operator fun Number.compareTo(other: Number): Int = this.toDouble().compareTo(other.toDouble())
+
+    fun combineTypes(a: Any?, b: Any?): Any? {
+        if (a == null || b == null) return null
+        if (a is Number && b is Number) {
+            if (a is Double || b is Double) return 0.0
+            if (a is Float || b is Float) return 0f
+            if (a is Long || b is Long) return 0L
+            if (a is Int || b is Int) return 0
+            return 0.0
+        }
+        return a
+    }
+
+    fun Any?.toDynamicCastToType(other: Any?) = when (other) {
+        is Boolean -> this.toDynamicBool()
+        is Int -> this.toDynamicInt()
+        is Long -> this.toDynamicLong()
+        is Float -> this.toDynamicDouble().toFloat()
+        is Double -> this.toDynamicDouble()
+        is String -> this.toDynamicString()
+        else -> this
+    }
     fun Any?.toDynamicString() = Dynamic2.toString(this)
     fun Any?.toDynamicBool() = Dynamic2.toBool(this)
     fun Any?.toDynamicInt() = Dynamic2.toInt(this)
+    fun Any?.toDynamicLong() = Dynamic2.toLong(this)
+    fun Any?.toDynamicDouble() = Dynamic2.toDouble(this)
+    fun Any?.toDynamicNumber() = Dynamic2.toNumber(this)
     fun Any?.toDynamicList() = Dynamic2.toList(this)
     fun Any?.dynamicLength() = Dynamic2.length(this)
     suspend fun Any?.dynamicGet(key: Any?, mapper: ObjectMapper2) = Dynamic2.accessAny(this, key, mapper)

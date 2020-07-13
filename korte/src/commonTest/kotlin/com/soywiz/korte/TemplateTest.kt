@@ -219,6 +219,11 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testFilterArgument() = suspendTest {
+        assertEquals("[car, los]", Template("{{ name | split: '|' }}")("name" to "car|los"))
+    }
+
+    @Test
     fun testArrayLiterals() = suspendTest {
         assertEquals("1234", Template("{% for n in [1, 2, 3, 4] %}{{ n }}{% end %}")(null))
         assertEquals("", Template("{% for n in [] %}{{ n }}{% end %}")(null))

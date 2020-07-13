@@ -305,16 +305,29 @@ interface ExprNode : DynamicContext {
                         val name = r.tryRead()?.text ?: ""
                         val args = arrayListOf<ExprNode>()
                         if (name.isEmpty()) tok.exception("Missing filter name")
-                        if (r.hasMore && r.peek().text == "(") {
-                            r.read()
-                            callargsloop@ while (r.hasMore && r.peek().text != ")") {
-                                args += ExprNode.parseExpr(r)
-                                when (r.expectPeek(",", ")").text) {
-                                    "," -> r.read()
-                                    ")" -> break@callargsloop
+                        if (r.hasMore) {
+                            when (r.peek().text) {
+                                // jekyll/liquid syntax
+                                ":" -> {
+                                    r.read()
+                                    callargsloop@ while (r.hasMore) {
+                                        args += ExprNode.parseExpr(r)
+                                        if (r.hasMore && r.peek().text == ",") r.read()
+                                    }
+                                }
+                                // twig syntax
+                                "(" -> {
+                                    r.read()
+                                    callargsloop@ while (r.hasMore && r.peek().text != ")") {
+                                        args += ExprNode.parseExpr(r)
+                                        when (r.expectPeek(",", ")").text) {
+                                            "," -> r.read()
+                                            ")" -> break@callargsloop
+                                        }
+                                    }
+                                    r.expect(")")
                                 }
                             }
-                            r.expect(")")
                         }
                         construct = FILTER(name, construct, args, tok)
                     }
