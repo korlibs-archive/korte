@@ -210,6 +210,18 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testStrictEquality() = suspendTest {
+        assertEquals("false", Template("{{ '1' === 1 }}")())
+        assertEquals("true", Template("{{ '1' !== 1 }}")())
+    }
+
+    @Test
+    fun testEquality() = suspendTest {
+        assertEquals("true", Template("{{ '1' == 1 }}")())
+        assertEquals("false", Template("{{ '1' == 0 }}")())
+    }
+
+    @Test
     fun testFilters() = suspendTest {
         assertEquals("CARLOS", Template("{{ name|upper }}")("name" to "caRLos"))
         assertEquals("carlos", Template("{{ name|lower }}")("name" to "caRLos"))

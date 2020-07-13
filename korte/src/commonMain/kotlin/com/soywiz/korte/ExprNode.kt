@@ -151,7 +151,7 @@ interface ExprNode : DynamicContext {
         private val BINOPS_PRIORITIES_LIST = listOf(
             listOf("*", "/", "%"),
             listOf("+", "-", "~"),
-            listOf("==", "!=", "<", ">", "<=", ">=", "<=>"),
+            listOf("==", "===", "!=", "!==", "<", ">", "<=", ">=", "<=>"),
             listOf("&&"),
             listOf("||"),
             listOf("and"),
@@ -367,7 +367,7 @@ interface ExprNode : DynamicContext {
                 "{", "}",
                 "&&", "||",
                 "&", "|", "^",
-                "==", "!=", "<", ">", "<=", ">=", "<=>",
+                "==", "===", "!=", "!==", "<", ">", "<=", ">=", "<=>",
                 "?:",
                 "..",
                 "+", "-", "*", "/", "%", "**",

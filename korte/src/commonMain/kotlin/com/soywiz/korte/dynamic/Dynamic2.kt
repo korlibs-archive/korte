@@ -33,20 +33,18 @@ object Dynamic2 : DynamicContext {
         "||" -> toBool(l) || toBool(r)
         "and" -> toBool(l) && toBool(r)
         "or" -> toBool(l) || toBool(r)
-        "==" -> {
-            if (l is Number && r is Number) {
-                l.toDouble() == r.toDouble()
-            } else {
-                l == r
-            }
+        "==" -> when {
+            l is Number && r is Number -> l.toDouble() == r.toDouble()
+            l is String || r is String -> l.toString() == r.toString()
+            else -> l == r
         }
-        "!=" -> {
-            if (l is Number && r is Number) {
-                l.toDouble() != r.toDouble()
-            } else {
-                l != r
-            }
+        "!=" -> when {
+            l is Number && r is Number -> l.toDouble() != r.toDouble()
+            l is String || r is String -> l.toString() != r.toString()
+            else -> l != r
         }
+        "===" -> l === r
+        "!==" -> l !== r
         "<" -> compare(l, r) < 0
         "<=" -> compare(l, r) <= 0
         ">" -> compare(l, r) > 0
