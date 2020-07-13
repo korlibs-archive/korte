@@ -1,9 +1,14 @@
 package com.soywiz.korte
 
+import com.soywiz.korte.dynamic.Dynamic2
+import com.soywiz.korte.internal.htmlspecialchars
+
 open class TemplateConfig(
     extraTags: List<Tag> = listOf(),
     extraFilters: List<Filter> = listOf(),
-    extraFunctions: List<TeFunction> = listOf()
+    extraFunctions: List<TeFunction> = listOf(),
+    // Here we can convert markdown into html if required. This is available at the template level + content + named blocks
+    val contentTypeProcessor: (content: String, contentType: String?) -> String = { content, _ -> content }
 ) {
     val extra = LinkedHashMap<String, Any>()
 
@@ -46,7 +51,10 @@ open class TemplateConfig(
     }
 
     var writeBlockExpressionResult: WriteBlockExpressionResultFunction = { value ->
-        this.write(value.toEscapedString())
+        this.write(when (value) {
+            is RawString -> contentTypeProcessor(value.str, value.contentType)
+            else -> contentTypeProcessor(Dynamic2.toString(value), null).htmlspecialchars()
+        })
     }
 
     fun replaceWriteBlockExpressionResult(func: suspend Template.EvalContext.(value: Any?, previous: WriteBlockExpressionResultFunction) -> Unit) {

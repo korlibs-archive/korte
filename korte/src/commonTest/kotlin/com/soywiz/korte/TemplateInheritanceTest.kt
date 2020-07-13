@@ -161,23 +161,23 @@ class TemplateInheritanceTest {
         assertEquals(
             "<html><div>side</div><div><h1>Content</h1></div></html>",
             Templates(
-                TemplateProvider(
-                    "root" to """
+                NewTemplateProvider(
+                    "root" to TemplateContent("""
 					<html>{{ content }}</html>
-                """.trimIndent(),
-                    "twocolumns" to """
+                """.trimIndent()),
+                    "twocolumns" to TemplateContent("""
 					---
 					layout: root
 					---
 					<div>side</div><div>{{ content }}</div>
-                """.trimIndent(),
-                    "main" to """
+                """.trimIndent()),
+                    "main" to TemplateContent("""
 					---
 					layout: twocolumns
 					mycontent: Content
 					---
 					<h1>{{ mycontent }}</h1>
-				""".trimIndent()
+				""".trimIndent())
                 )
             ).get("main")()
         )

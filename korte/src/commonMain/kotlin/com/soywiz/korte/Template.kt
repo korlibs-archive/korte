@@ -7,7 +7,7 @@ import kotlin.collections.set
 
 open class TemplateContent(
     val text: String,
-    val contentType: String = "html",
+    val contentType: String? = null,
     val chunkProcessor: ((String) -> String) = { it }
 )
 
@@ -34,7 +34,7 @@ class Template internal constructor(
             if (layout != null) {
                 rootNode = DefaultBlocks.BlockGroup(
                     listOf(
-                        DefaultBlocks.BlockCapture("content", rootNode),
+                        DefaultBlocks.BlockCapture("content", rootNode, templateContent.contentType),
                         DefaultBlocks.BlockExtends(ExprNode.LIT(layout))
                     )
                 )

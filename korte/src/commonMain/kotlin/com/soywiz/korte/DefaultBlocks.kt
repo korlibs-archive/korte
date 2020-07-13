@@ -5,7 +5,7 @@ import com.soywiz.korte.internal.*
 var TemplateConfig.debugPrintln by extraProperty({ extra }) { { v: Any? -> println(v) } }
 
 object DefaultBlocks {
-    data class BlockBlock(val name: String) : Block {
+    data class BlockBlock(val name: String, val contentType: String?) : Block {
         override suspend fun eval(context: Template.EvalContext) {
             //val oldBlock = context.currentBlock
             //try {
@@ -19,12 +19,12 @@ object DefaultBlocks {
         }
     }
 
-    data class BlockCapture(val varname: String, val content: Block) : Block {
+    data class BlockCapture(val varname: String, val content: Block, val contentType: String? = null) : Block {
         override suspend fun eval(context: Template.EvalContext) {
             val result = context.capture {
                 content.eval(context)
             }
-            context.scope.set(varname, RawString(result))
+            context.scope.set(varname, RawString(result, contentType))
         }
     }
 

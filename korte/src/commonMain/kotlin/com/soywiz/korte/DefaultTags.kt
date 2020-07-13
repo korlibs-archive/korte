@@ -4,20 +4,22 @@ package com.soywiz.korte
 object DefaultTags {
 	val BlockTag = Tag("block", setOf(), setOf("end", "endblock")) {
 		val part = chunks.first()
-		val tokens = part.tag.tokens
-		val name = ExprNode.parseId(tokens)
+		val tr = part.tag.tokens
+		val name = ExprNode.parseId(tr)
 		if (name.isEmpty()) throw IllegalArgumentException("block without name")
-		tokens.expectEnd()
+        val contentType = if (tr.hasMore) ExprNode.parseId(tr) else null
+		tr.expectEnd()
 		context.template.addBlock(name, part.body)
-		DefaultBlocks.BlockBlock(name)
+		DefaultBlocks.BlockBlock(name, contentType ?: this.context.template.templateContent.contentType)
 	}
 
 	val Capture = Tag("capture", setOf(), null) {
 		val main = chunks[0]
 		val tr = main.tag.tokens
 		val varname = ExprNode.parseId(tr)
+        val contentType = if (tr.hasMore) ExprNode.parseId(tr) else null
 		tr.expectEnd()
-		DefaultBlocks.BlockCapture(varname, main.body)
+		DefaultBlocks.BlockCapture(varname, main.body, contentType)
 	}
 
 	val Debug = Tag("debug", setOf(), null) {

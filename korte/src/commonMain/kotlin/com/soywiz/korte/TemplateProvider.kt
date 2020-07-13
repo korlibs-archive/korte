@@ -22,3 +22,8 @@ fun TemplateProvider(map: Map<String, String>): TemplateProvider = object : Temp
 }
 
 fun TemplateProvider(vararg map: Pair<String, String>): TemplateProvider = TemplateProvider(map.toMap())
+
+fun NewTemplateProvider(map: Map<String, TemplateContent>): NewTemplateProvider = object : NewTemplateProvider {
+    override suspend fun newGet(template: String): TemplateContent? = map[template]
+}
+fun NewTemplateProvider(vararg map: Pair<String, TemplateContent>): NewTemplateProvider = NewTemplateProvider(map.toMap())
