@@ -26,6 +26,8 @@ internal object Yaml {
     private fun read(s: ListReader<Token>, level: Int): Any? = s.run {
         var list: ArrayList<Any?>? = null
         var map: MutableMap<String, Any?>? = null
+        var lastMapKey: String? = null
+        var lastMapValue: Any? = null
 
         val levelStr = if (TRACE) "  ".repeat(level) else ""
 
@@ -56,7 +58,12 @@ internal object Yaml {
                 when (item.str) {
                     "-" -> {
                         if (s.read().str != "-") invalidOp
-                        if (list == null) list = arrayListOf()
+                        if (list == null) {
+                            list = arrayListOf()
+                            if (map != null && lastMapKey != null && lastMapValue == null) {
+                                map[lastMapKey] = list
+                            }
+                        }
                         if (TRACE) println("${levelStr}LIST_ITEM...")
                         val res = read(s, level + 1)
                         if (TRACE) println("${levelStr}LIST_ITEM: $res")
@@ -88,6 +95,8 @@ internal object Yaml {
                             if (s.read().str != ":") invalidOp
                             if (TRACE) println("${levelStr}MAP[$key]...")
                             val value = readOrString(s, level, EMPTY_SET)
+                            lastMapKey = key
+                            lastMapValue = value
                             map[key] = value
                             if (TRACE) println("${levelStr}MAP[$key]: $value")
                         }
@@ -98,7 +107,7 @@ internal object Yaml {
 
         if (TRACE) println("${levelStr}RETURN: list=$list, map=$map")
 
-        return list ?: map
+        return map ?: list
     }
 
     fun readOrString(s: ListReader<Token>, level: Int, delimiters: Set<String>): Any? {
@@ -188,3 +197,4 @@ internal object Yaml {
 
     private fun StrReader.readUntilLineEnd() = this.readUntil { it == '\n' }
 }
+
