@@ -109,14 +109,21 @@ object DefaultBlocks {
 
     data class BlockInclude(
         val fileNameExpr: ExprNode,
-        val params: LinkedHashMap<String, ExprNode>
+        val params: LinkedHashMap<String, ExprNode>,
+        val filePos: FilePosContext,
+        val tagContent: String
     ) : Block {
         override suspend fun eval(context: Template.EvalContext) {
             val fileName = fileNameExpr.eval(context).toDynamicString()
             val evalParams = params.mapValues { it.value.eval(context) }.toMutableMap()
             context.createScope {
                 context.scope.set("include", evalParams)
-                Template.TemplateEvalContext(context.templates.getInclude(fileName)).eval(context)
+                val includeTemplate = try {
+                    context.templates.getInclude(fileName)
+                } catch (e: Throwable) {
+                    korteException("Can't include template ($tagContent): ${e.message}", filePos)
+                }
+                Template.TemplateEvalContext(includeTemplate).eval(context)
             }
         }
     }

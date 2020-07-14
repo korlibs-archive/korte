@@ -108,7 +108,7 @@ object DefaultTags {
             params[id] = expr
         }
         tr.expectEnd()
-		DefaultBlocks.BlockInclude(expr, params)
+		DefaultBlocks.BlockInclude(expr, params, main.tag.posContext, main.tag.content)
 	}
 
 	val Macro = Tag("macro", setOf(), setOf("end", "endmacro")) {
