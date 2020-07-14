@@ -280,7 +280,13 @@ interface ExprNode : DynamicContext {
                     }
                     // ID
                     else {
-                        VAR(r.read().text)
+                        val str = r.read().text
+                        when (str) {
+                            "true" -> LIT(true)
+                            "false" -> LIT(false)
+                            "null", "nil" -> LIT(null)
+                            else -> VAR(str)
+                        }
                     }
                 }
             }

@@ -175,6 +175,12 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testIfBooleanLiterals() = suspendTest {
+        assertEquals("true", Template("{% if true %}true{% end %}")(null))
+        assertEquals("false", Template("{% if !false %}false{% end %}")(null))
+    }
+
+    @Test
     fun testForAccess() = suspendTest {
         assertEquals(
             ":Zard:Ballesteros",
