@@ -181,6 +181,17 @@ class TemplateTest : BaseTest() {
     }
 
     @Test
+    fun testOverwriteFilter() = suspendTest {
+        assertEquals("HELLO", Template("{{ 'hello' | upper }}")(null))
+        assertEquals("[hello]", Template("{{ 'hello' | upper }}", TemplateConfig(extraFilters = listOf(Filter("upper") { "[" + subject.toDynamicString() + "]" })))(null))
+    }
+
+    @Test
+    fun testCustomUnknownFilter() = suspendTest {
+        assertEquals("-ERROR-", Template("{{ 'hello' | asdasdasdasdas }}", TemplateConfig(extraFilters = listOf(Filter("unknown") { "-ERROR-" })))(null))
+    }
+
+    @Test
     fun testForAccess() = suspendTest {
         assertEquals(
             ":Zard:Ballesteros",
