@@ -29,7 +29,7 @@ It has out of the box support for [ktor](https://ktor.io/) and [vert.x](https://
 
 It works on JVM and JS out of the box. And on Native with untyped model data or by making the models implement the [DynamicType](https://github.com/korlibs/korte/blob/7461aa4b7dc496ff1c0e986cdb2c7843891ba325/korte/src/commonMain/kotlin/com/soywiz/korte/dynamic/DynamicType.kt#L61) interface.
 
-Because asynchornity is in its name and soul, it allows to call *suspend*ing methods from within your templates.
+Because asynchrony is in its name and soul, it allows to call *suspend*ing methods from within your templates.
 
 ## Documentation:
 
