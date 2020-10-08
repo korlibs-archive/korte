@@ -128,6 +128,10 @@ interface ExprNode : DynamicContext {
             }
         }
 
+        fun parse(str: String, fileName: String = "expression"): ExprNode {
+            return ExprNode.parse(str, FilePosContext(FileContext(fileName, str), 1))
+        }
+
         fun parseId(r: ListReader<Token>): String {
             return r.tryRead()?.text ?: (r.tryPrev() ?: r.ctx)?.exception("Expected id") ?: TODO()
         }
@@ -271,8 +275,8 @@ interface ExprNode : DynamicContext {
                     if (r.peek() is ExprNode.Token.TNumber) {
                         val ntext = r.read().text
                         when (ntext.toDouble()) {
-                            ntext.toInt().toDouble() -> LIT(ntext.toIntOrNull() ?: 0)
-                            ntext.toLong().toDouble() -> LIT(ntext.toLongOrNull() ?: 0L)
+                            ntext.toIntOrNull()?.toDouble() -> LIT(ntext.toIntOrNull() ?: 0)
+                            ntext.toLongOrNull()?.toDouble() -> LIT(ntext.toLongOrNull() ?: 0L)
                             else -> LIT(ntext.toDoubleOrNull() ?: 0.0)
                         }
                     }
@@ -402,7 +406,17 @@ interface ExprNode : DynamicContext {
                     val dstart = r.pos
                     val id = r.readWhile(Char::isLetterDigitOrUnderscore)
                     if (id.isNotEmpty()) {
-                        if (id[0].isDigit()) emit(ExprNode.Token.TNumber(id), dstart) else emit(ExprNode.Token.TId(id), dstart)
+                        if (id[0].isDigit()) {
+                            if (r.peek() == '.' && r.peek(2)[1].isDigit()) {
+                                r.skip()
+                                val decimalPart = r.readWhile(Char::isLetterDigitOrUnderscore)
+                                emit(ExprNode.Token.TNumber("$id.$decimalPart"), dstart)
+                            } else {
+                                emit(ExprNode.Token.TNumber(id), dstart)
+                            }
+                        } else {
+                            emit(ExprNode.Token.TId(id), dstart)
+                        }
                     }
                     r.skipSpaces()
                     val dstart2 = r.pos

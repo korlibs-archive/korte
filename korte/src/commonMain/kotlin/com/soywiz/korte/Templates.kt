@@ -19,7 +19,7 @@ open class Templates(
 
     @PublishedApi
     internal suspend fun cache(name: String, callback: suspend () -> Template): Template = when {
-        cache -> tcache(name) { callback() }
+		cache -> tcache.call(name) { callback() }
         else -> callback()
     }
 
