@@ -7,7 +7,7 @@ import kotlin.test.*
 
 class TemplateTest : BaseTest() {
     //@Reflect
-    data class Person(val name: String, val surname: String) :
+    data class Person(@JsName("name") val name: String, @JsName("surname") val surname: String) :
         DynamicType<Person> by DynamicType({ register(Person::name, Person::surname) })
 
     @Test
@@ -306,6 +306,7 @@ class TemplateTest : BaseTest() {
         val success = "success!"
 
         class Test1 : DynamicType<Test1> by DynamicType({ register(Test1::a) }) {
+            @JsName("a")
             val a: String get() = success
         }
 

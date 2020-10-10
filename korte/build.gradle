@@ -1,7 +1,7 @@
 apply plugin: com.soywiz.korlibs.KorlibsPlugin
 
 korlibs {
-    exposeVersion()
+    //exposeVersion()
 }
 
 dependencies {
