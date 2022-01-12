@@ -54,13 +54,17 @@ open class JvmObjectMapper2 : ObjectMapper2() {
     override suspend fun set(instance: Any, key: Any?, value: Any?) {
         if (instance is DynamicType<*>) return instance.dynamicShape.setProp(instance, key, value)
         val prop = instance::class.classInfo.propByName[key] ?: return
-        prop.setter?.invoke(instance, value)
+        if (prop.setter != null) {
+            prop.setter?.invoke(instance, value)
+        } else {
+            prop.field?.set(instance, value)
+        }
     }
 
     override suspend fun get(instance: Any, key: Any?): Any? {
         if (instance is DynamicType<*>) return instance.dynamicShape.getProp(instance, key)
         val prop = instance::class.classInfo.propByName[key] ?: return null
-        return prop.getter?.invoke(instance)
+        return prop.getter?.invoke(instance) ?: prop.field?.get(instance)
     }
 }
 
@@ -68,7 +72,7 @@ private class WeakPropertyThis<T : Any, V>(val gen: T.() -> V) {
     val map = WeakHashMap<T, V>()
 
     operator fun getValue(obj: T, property: KProperty<*>): V = map.getOrPut(obj) { gen(obj) }
-    operator fun setValue(obj: T, property: KProperty<*>, value: V) = run { map[obj] = value }
+    operator fun setValue(obj: T, property: KProperty<*>, value: V) { map[obj] = value }
 }
 
 private val Class<*>.allDeclaredFields: List<Field>
