@@ -13,7 +13,7 @@ object DefaultTags {
 		DefaultBlocks.BlockBlock(name, contentType ?: this.context.template.templateContent.contentType)
 	}
 
-	val Capture = Tag("capture", setOf(), null) {
+	val Capture = Tag("capture", setOf(), setOf("endcapture")) {
 		val main = chunks[0]
 		val tr = main.tag.tokens
 		val varname = ExprNode.parseId(tr)
